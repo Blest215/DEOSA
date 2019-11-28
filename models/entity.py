@@ -129,6 +129,7 @@ class User(Body):
     def update_orientation(self):
         """ update orientation of user head from mobility """
         # Orientation of the user is randomly generated based on the mobility
+        # TODO orientation here is different from Orientation
         mobility_orientation = self.mobility.direction.to_quaternion()
         random_horizontal_rotation = Rotation(np.random.normal(loc=0.0, scale=0.2), 0, 0, 1)
         vertical_rotation_axis = self.mobility.direction.cross(Vector(0, 0, 1))
