@@ -12,6 +12,10 @@ class Constructor:
     def get(self, index):
         pass
 
+    @abstractmethod
+    def __str__(self):
+        pass
+
 
 class UserConstructor(Constructor):
     """

@@ -77,7 +77,7 @@ class Mobility:
     def vectorize(self):
         """ vectorize: returns list form of the mobility, for concatenation with other lists """
         # return (self.speed * self.direction).vectorize() TODO assume static speed
-        return self.direction.vectorize()
+        return self.direction.vectorize() + [self.speed]
 
 
 class RectangularDirectedMobility(Mobility):

@@ -68,10 +68,6 @@ class RewardFunction:
         pass
 
     @abstractmethod
-    def get_summary_feed_dict(self, reward_list):
-        pass
-
-    @abstractmethod
     def __str__(self):
         pass
 
@@ -81,14 +77,6 @@ class HandoverPenaltyRewardFunction(RewardFunction):
     def __init__(self, effectiveness):
         assert isinstance(effectiveness, Effectiveness)
         self.effectiveness = effectiveness
-
-        # with tf.variable_scope("Reward"):
-        #     self.penalty_list = tf.placeholder(shape=[None], dtype=tf.float32, name="PenaltyList")
-        #     variable_summaries(self.penalty_list, "Penalty")
-        #     self.effectiveness_list = tf.placeholder(shape=[None], dtype=tf.float32, name="EffectivenessList")
-        #     variable_summaries(self.effectiveness_list, "Effectiveness")
-        #     self.overall_score_list = tf.placeholder(shape=[None], dtype=tf.float32, name="OverallScoreList")
-        #     variable_summaries(self.overall_score_list, "OverallScore")
 
     def __str__(self):
         return "HandoverPenaltyReward({effectiveness}: {factors}".format(
@@ -104,14 +92,4 @@ class HandoverPenaltyRewardFunction(RewardFunction):
             penalty = 0
 
         return PenaltyReward(penalty=penalty, effectiveness=self.effectiveness.measure(user, service, context))
-
-    def get_summary_feed_dict(self, reward_list):
-        for reward in reward_list:
-            assert isinstance(reward, PenaltyReward)
-
-        return {
-            self.penalty_list: [reward.penalty for reward in reward_list],
-            self.effectiveness_list: [reward.effectiveness for reward in reward_list],
-            self.overall_score_list: [reward.get_overall_score() for reward in reward_list]
-        }
 

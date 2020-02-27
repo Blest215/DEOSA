@@ -87,7 +87,7 @@ class Environment:
     def get_state(self):
         """ get_state: return the full state of the environment """
         return {
-            "user": self.users,
+            "user": self.user,
             "services": self.services
         }
 

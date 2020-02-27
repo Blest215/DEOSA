@@ -45,8 +45,8 @@ class EffectDrivenMediumSelectionExperiment(Experiment):
             self.agent = NoHandoverSelectionAgent("NoHandover", self.env, self.datetime, self.num_episode, self.num_step)
         if configuration.agent == "greedy":
             self.agent = GreedySelectionAgent("Greedy", self.env, self.datetime, self.num_episode, self.num_step)
-        if configuration.agent == "EDSS(DQN)":
-            self.agent = EDSSAgentDQN("EDSS(DQN)", self.env, self.datetime, self.num_episode, self.num_step,
+        if configuration.agent == "EDMS(DQN)":
+            self.agent = NewEDMSAgentDQN("EDMS(DQN)", self.env, self.datetime, self.num_episode, self.num_step,
                                       memory_size=self.memory_size,
                                       batch_size=self.batch_size,
                                       learning_rate=configuration.learning_rate,
@@ -60,5 +60,5 @@ class EffectDrivenMediumSelectionExperiment(Experiment):
 
     def run(self):
         self.configuration.save()
-        # self.agent.train()
-        self.agent.test()
+        with tf.device('/GPU:1'):
+            self.agent.run("train")

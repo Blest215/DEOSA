@@ -26,6 +26,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("agent", help="the name of agent to simulate")
 args = parser.parse_args()
 
+tf.keras.backend.set_floatx('float64')
+
 
 def main():
     """
