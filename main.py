@@ -26,7 +26,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("agent", help="the name of agent to simulate")
 args = parser.parse_args()
 
-tf.keras.backend.set_floatx('float64')
+# tf.keras.backend.set_floatx('float64')
 
 
 def main():
@@ -72,7 +72,8 @@ def main():
                          eps_init=1.0,
                          eps_final=1e-2,
                          # set decaying rate according to the number of episodes: to make epsilon reaches eps_final at the end
-                         eps_decay=np.power(1e-2/1.0, 1 / 1000),
+                         # eps_decay=np.power(1e-2/1.0, 1 / 1000),
+                         eps_decay=0.95,
                          agent=args.agent,
                          datetime=now,
                          summary_path=get_summary_path(agent=args.agent, date=now, filename="configuration.txt"))

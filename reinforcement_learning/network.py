@@ -40,7 +40,7 @@ class Network(tf.keras.Model):
         if self.target_network:
             """ [DDQN] if target network exist, bootstrapping from target network """
             return self.target_network(next_observation)
-        return self.call(next_observation)
+        return self(next_observation)
 
     @abstractmethod
     def call(self, observation, training=None, mask=None):
@@ -79,6 +79,7 @@ class EDMSNetworkDQN(Network):
 
         self.optimizer = tf.optimizers.Adam(learning_rate)
 
+    @tf.function
     def call(self, observation, training=None, mask=None):
         z = self.input_layer(observation)
         for layer in self.hidden_layers:
@@ -86,7 +87,17 @@ class EDMSNetworkDQN(Network):
         output = self.output_layer(z)
         return output
 
+    @tf.function(input_signature=(
+                 tf.TensorSpec(shape=[None, 15], dtype=tf.float32),
+                 tf.TensorSpec(shape=[], dtype=tf.int32),
+                 tf.TensorSpec(shape=[], dtype=tf.float32),
+                 tf.TensorSpec(shape=[None, 15], dtype=tf.float32),
+                 tf.TensorSpec(shape=[], dtype=tf.bool)))
     def update(self, observation, action, reward, next_observation, done):
+        """
+        update: updates the parameters of the network
+        issue: tf.function not working well
+        """
         num_actions = len(observation)
 
         if done:
@@ -94,15 +105,15 @@ class EDMSNetworkDQN(Network):
             target_Q = reward
         else:
             """ else, bootstrapping next Q value """
-            target_Q = reward + self.discount_factor * np.max(self.bootstrap(next_observation))
+            target_Q = tf.add(reward, tf.scalar_mul(self.discount_factor, tf.reduce_max(self.bootstrap(next_observation))))
 
         with tf.GradientTape() as tape:
-            action_one_hot = tf.one_hot(action, num_actions, dtype=tf.float64)
+            action_one_hot = tf.one_hot(action, num_actions, dtype=tf.float32)
             responsible_Q = tf.reduce_sum(tf.multiply(self.call(observation), action_one_hot))
+            # responsible_Q = self(tf.expand_dims(observation[action], 0))
             loss = tf.square(target_Q - responsible_Q)
 
-            variables = self.trainable_variables
-            gradients = tape.gradient(loss, variables)
-            self.optimizer.apply_gradients(zip(gradients, variables))
-
+        variables = self.trainable_variables
+        gradients = tape.gradient(loss, variables)
+        self.optimizer.apply_gradients(zip(gradients, variables))
         return loss

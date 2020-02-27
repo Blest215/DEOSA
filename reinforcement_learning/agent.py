@@ -172,7 +172,7 @@ class EDMSAgentDQN(Agent):
             """ epsilon-greedy """
             selection = random.choice(range(len(services)))
         else:
-            observation = self.convert_observations(user, services)
+            observation = self.normalize_observations(self.convert_observations(user, services))
             """ calculate Q-value for each service (action) """
             Q_set = self.main_network(observation)
             selection = np.argmax(Q_set)
@@ -195,7 +195,7 @@ class EDMSAgentDQN(Agent):
             for memory in batch:
                 loss_list.append(self.main_network.update(observation=memory["observation"],
                                                           action=memory["action"],
-                                                          reward=memory["reward"],
+                                                          reward=float(memory["reward"]),
                                                           next_observation=memory["next_observation"],
                                                           done=memory["done"]))
             return np.mean(loss_list)
@@ -208,10 +208,15 @@ class EDMSAgentDQN(Agent):
             self.eps = self.eps_final
 
     @staticmethod
+    def normalize_observations(observations):
+        """ normalize_observations: normalizes the observation values by taking logarithm after adding 1 """
+        return np.log(np.add(observations, 1))
+
+    @staticmethod
     def convert_observations(user, services):
-        """ convert_observations: convert user and services information into matrix for the TensorFlow network """
+        """ convert_observations: converts user and services information into matrix for the TensorFlow network """
         num_service = len(services)
         user_tile = np.tile(user.vectorize(), (num_service, 1))
-        service_tile = [service.vectorize() for service in services]
+        service_tile = np.array([service.vectorize() for service in services])
         observation = np.concatenate((user_tile, service_tile), axis=1)
         return observation
