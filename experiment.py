@@ -46,7 +46,7 @@ class EffectDrivenMediumSelectionExperiment(Experiment):
         if configuration.agent == "greedy":
             self.agent = GreedySelectionAgent("Greedy", self.env, self.datetime, self.num_episode, self.num_step)
         if configuration.agent == "EDMS(DQN)":
-            self.agent = NewEDMSAgentDQN("EDMS(DQN)", self.env, self.datetime, self.num_episode, self.num_step,
+            self.agent = EDMSAgentDQN("EDMS(DQN)", self.env, self.datetime, self.num_episode, self.num_step,
                                       memory_size=self.memory_size,
                                       batch_size=self.batch_size,
                                       learning_rate=configuration.learning_rate,
