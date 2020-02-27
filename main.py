@@ -10,7 +10,7 @@ from models.observation import EuclideanObservation, FullObservation
 from models.effectiveness import VisualEffectiveness
 from models.entity import User, Service, DisplayDevice
 from models.physics import *
-from models.constructor import get_user_constructor, get_visual_service_constructor
+from models.constructor import UserConstructor, VisualServiceConstructor
 
 
 """ format of path that collects summary for each experiment """
@@ -51,8 +51,8 @@ def main():
                          observation=EuclideanObservation(observation_range=10),
                          #observation=FullObservation(),
 
-                         user_constructor=get_user_constructor(width, height, depth, max_speed),
-                         service_constructor=get_visual_service_constructor(width, height, depth),
+                         user_constructor=UserConstructor(width, height, depth, max_speed),
+                         service_constructor=VisualServiceConstructor(width, height, depth),
                          reward_function=HandoverPenaltyRewardFunction(effectiveness=VisualEffectiveness(
                              text_size_pixel=27,
                              resolution=1080,

@@ -70,13 +70,13 @@ class Environment:
 
         """ set users """
         for i in range(self.num_user):
-            self.users.append(self.user_constructor(i))
+            self.users.append(self.user_constructor.get(i))
         """ the first user becomes primary (main) user """
         self.user = self.users[0]
 
         """ set devices and services in the environment """
         for i in range(self.num_service):
-            self.services.append(self.service_constructor(i))
+            self.services.append(self.service_constructor.get(i))
 
         # if not self.get_observation()["services"]:
         #     """ reset until at least one service discovered """
