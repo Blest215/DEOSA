@@ -3,9 +3,10 @@ from abc import abstractmethod
 import matplotlib
 import matplotlib.pyplot as plt
 
-from models.entity import User, Device, Service
-from models.mobility import *
-from models.orientation import generate_random_orientation, generate_random_vertical_orientation, generate_random_half_line_orientation
+from models.entity import User, DisplayDevice, Service
+from models.physics import *
+from models.physics import generate_random_orientation, generate_random_vertical_orientation, \
+    generate_random_half_line_orientation
 from models.observation import Observation
 from models.effectiveness import Effectiveness, DistanceEffectiveness, VisualEffectiveness
 from reinforcement_learning.reward import RewardFunction
@@ -13,157 +14,108 @@ from reinforcement_learning.reward import RewardFunction
 
 class Environment:
     """ Environment: abstract class of IoT environments for required methods """
-    def __init__(self, service_type, num_device, width, height, depth,
-                 device_size_min, device_size_max, reward_function):
-        """ service_type: type of service to simulate """
-        self.service_type = service_type
-        """ num_device: number of devices """
-        self.num_device = num_device
+    def __init__(self, num_user, num_service, width, height, depth, observation,
+                 user_constructor, service_constructor, reward_function):
+        """ __init__: initialize the environment by setting configurations and resetting """
+
+        """ num_user: number of users """
+        assert num_user >= 1
+        self.num_user = num_user
+        """ num_service: number of services """
+        assert num_service >= 1
+        self.num_service = num_service
         """ width: x-axis size of the environment """
+        assert width > 0
         self.width = width
         """ height: y-axis size of the environment """
+        assert height > 0
         self.height = height
         """ depth: z-axis size of the environment """
+        assert depth > 0
         self.depth = depth
+        """ observation: observation model """
+        assert isinstance(observation, Observation)
+        self.observation = observation
+        self.observation.set_environment(self)
 
-        """ device_size_min/max: min/max size of devices """
-        self.device_size_min = device_size_min
-        self.device_size_max = device_size_max
-
+        """ user_constructor: constructor function for users """
+        self.user_constructor = user_constructor
+        """ service_constructor: constructor function for services """
+        self.service_constructor = service_constructor
         """ reward: reward model """
         assert isinstance(reward_function, RewardFunction)
         self.reward_function = reward_function
 
+        """ user: main user that utilizes services """
         self.user = None
-        self.devices = []
+        """ users: the list of users """
+        self.users = []
+        """ services: the list of services """
         self.services = []
 
         self.reset()
 
-    @abstractmethod
-    def reset(self):
-        pass
-
-    @abstractmethod
-    def step(self, action):
-        pass
-
-    @abstractmethod
     def update_state(self):
-        pass
-
-    @abstractmethod
-    def get_state(self):
-        pass
-
-    @abstractmethod
-    def render(self):
-        pass
-
-    @abstractmethod
-    def get_observation(self):
-        pass
-
-    @abstractmethod
-    def get_observation_size(self):
-        pass
-
-    @abstractmethod
-    def get_action_size(self):
-        pass
-
-
-class SingleUserSingleServicePartialObservableEnvironment(Environment):
-    """
-        SingleUserSingleServicePartialObservable3DEnvironment
-        
-        Environment settings
-            - single user
-            - single service selected
-            - Partial observation based on Euclidean-distance
-            - 3-dimensional space
-    """
-    def __init__(self, service_type, num_device, width, height, depth, device_size_min, device_size_max,
-                 max_speed, observation, reward_function):
-        """ max_speed: maximum speed that a mobile object can have """
-        self.max_speed = max_speed
-
-        """ observation: observation model, for distance-based partial observation """
-        assert isinstance(observation, Observation)
-        self.observation = observation
-
-        Environment.__init__(self, service_type, num_device, width, height, depth,
-                             device_size_min, device_size_max, reward_function)
+        """ update_state: updates the state of environment, for each step """
+        for user in self.users:
+            user.update()
+        for service in self.services:
+            service.update()
 
     def reset(self):
-        self.devices = []
+        """ reset: resets the environment """
+        self.user = None
+        self.users = []
         self.services = []
 
-        """ Reset user """
-        self.user = User(uid=0,
-                         # Start from edge of the environment
-                         coordinate=generate_custom_coordinate(self.width, self.height, self.depth,
-                                                               x=10, y=self.height/2,
-                                                               # Common height of a human
-                                                               z=1.7),
-                         # Go across the environment
-                         mobility=generate_custom_mobility(self.width,
-                                                           self.height,
-                                                           self.depth,
-                                                           generate_custom_direction(1, 0, 0),
-                                                           self.max_speed))
+        """ set users """
+        for i in range(self.num_user):
+            self.users.append(self.user_constructor(i))
+        """ the first user becomes primary (main) user """
+        self.user = self.users[0]
 
-        """ Reset devices and services in the environment """
-        for i in range(self.num_device):
-            # TODO currently, service is a simple encapsulation of device functionality, so device_type == service_type
-            coordinate = generate_random_coordinate(self.width, self.height, self.depth)
-            mobility = StaticMobility()
-            orientation = generate_random_orientation()
-            new_device = Device(name=i,
-                                device_type=self.service_type,
-                                coordinate=coordinate,
-                                mobility=mobility,
-                                orientation=orientation,
-                                size=self.device_size_min+random.random()*(self.device_size_max-self.device_size_min))
-            new_service = Service(name=i,
-                                  service_type=self.service_type,
-                                  device=new_device)
-            self.devices.append(new_device)
-            self.services.append(new_service)
+        """ set devices and services in the environment """
+        for i in range(self.num_service):
+            self.services.append(self.service_constructor(i))
 
-        if not self.get_observation()["services"]:
-            """ reset until at least one service discovered """
-            return self.reset()
+        # if not self.get_observation()["services"]:
+        #     """ reset until at least one service discovered """
+        #     return self.reset()
 
         return self.get_observation()
 
     def get_state(self):
         """ get_state: return the full state of the environment """
         return {
-            "user": self.user,
+            "user": self.users,
             "services": self.services
         }
 
-    def update_state(self):
-        self.user.update()
-        for service in self.services:
-            service.update()
+    def get_observation(self):
+        """ return observation in both dictionary format """
+        return self.observation.get_observation()
+
+    def get_observation_size(self):
+        return len(self.user.vectorize())
+
+    def get_action_size(self):
+        return len(self.services[0].vectorize())
 
     def step(self, action):
+        """ step: make environment one step further by perform selection and update states """
+
         """ receives selection result as a service instance """
         assert isinstance(action, Service)
 
         done = False
+        """ measure reward value according to the selection """
         reward = self.reward_function.measure(self.user, action)
 
-        # Release service and acquire new
+        """ Release service and acquire new """
         if self.user.service:
             self.user.service.release()
         self.user.utilize(action)
         action.acquire(self.user)
-
-        # TODO reward calculation
-        # TODO state update according to the given action
 
         self.update_state()
         if not self.get_observation()["services"]:
@@ -172,13 +124,13 @@ class SingleUserSingleServicePartialObservableEnvironment(Environment):
 
         return self.get_observation(), reward, done
 
-    def render(self):
+    def render(self):  # TODO
         fig = plt.figure()
 
         # locations of user and devices
         plt.scatter(x=[device.coordinate.x for device in self.devices] + [self.user.coordinate.x],
                     y=[device.coordinate.y for device in self.devices] + [self.user.coordinate.y],
-                    c=["blue" for _ in range(self.num_device)] + ["red"])
+                    c=["blue" for _ in range(self.num_service)] + ["red"])
 
         # orientations of user and devices
         head_width = 0.05
@@ -194,19 +146,3 @@ class SingleUserSingleServicePartialObservableEnvironment(Environment):
         # TODO observation range
 
         plt.show()
-
-    def get_observation(self):
-        """ return observation in both dictionary format """
-        return self.observation.get_observation(self.user, self.services)
-
-    def get_observation_vector(self):
-        return {
-            "user": self.user.vectorize(),
-            "services": [service.vectorize() for service in self.services]
-        }
-
-    def get_observation_size(self):
-        return len(self.user.vectorize())
-
-    def get_action_size(self):
-        return len(self.services[0].vectorize())

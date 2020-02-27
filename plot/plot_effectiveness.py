@@ -8,10 +8,9 @@ from matplotlib import cm
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
-from models.entity import User, Device, Service
-from models.orientation import generate_random_orientation
-from models.mobility import Direction, Coordinate, StaticMobility, generate_horizontal_direction_specific_speed_mobility, generate_custom_mobility
-from models.orientation import Orientation
+from models.entity import User, DisplayDevice, Service
+from models.physics import Direction, Coordinate, StaticMobility, generate_horizontal_direction_specific_speed_mobility, \
+    generate_custom_mobility, Orientation, generate_random_orientation
 from models.effectiveness import VisualEffectiveness
 
 
@@ -41,12 +40,12 @@ effectiveness = VisualEffectiveness(text_size_pixel=12,
                                     FoV_angle_max=105,
                                     face_angle_max=60)
 
-device = Device(name=0,
-                device_type="visual",
-                coordinate=Coordinate(x=0, y=0, z=1),
-                mobility=StaticMobility(),
-                orientation=Orientation(theta=-np.pi/2, i=0, j=0, k=1),
-                size=1)
+device = DisplayDevice(name=0,
+                       device_type="visual",
+                       coordinate=Coordinate(x=0, y=0, z=1),
+                       mobility=StaticMobility(),
+                       orientation=Orientation(theta=-np.pi/2, i=0, j=0, k=1),
+                       size=1)
 service = Service(name=0,
                   service_type="visual",
                   device=device)

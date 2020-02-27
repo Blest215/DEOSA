@@ -58,7 +58,7 @@ class PenaltyReward(Reward):
         self.effectiveness = effectiveness
 
     def get_overall_score(self):
-        return self.penalty + self.effectiveness
+        return float(self.penalty + self.effectiveness)
 
 
 class RewardFunction:
@@ -82,13 +82,13 @@ class HandoverPenaltyRewardFunction(RewardFunction):
         assert isinstance(effectiveness, Effectiveness)
         self.effectiveness = effectiveness
 
-        with tf.variable_scope("Reward"):
-            self.penalty_list = tf.placeholder(shape=[None], dtype=tf.float32, name="PenaltyList")
-            variable_summaries(self.penalty_list, "Penalty")
-            self.effectiveness_list = tf.placeholder(shape=[None], dtype=tf.float32, name="EffectivenessList")
-            variable_summaries(self.effectiveness_list, "Effectiveness")
-            self.overall_score_list = tf.placeholder(shape=[None], dtype=tf.float32, name="OverallScoreList")
-            variable_summaries(self.overall_score_list, "OverallScore")
+        # with tf.variable_scope("Reward"):
+        #     self.penalty_list = tf.placeholder(shape=[None], dtype=tf.float32, name="PenaltyList")
+        #     variable_summaries(self.penalty_list, "Penalty")
+        #     self.effectiveness_list = tf.placeholder(shape=[None], dtype=tf.float32, name="EffectivenessList")
+        #     variable_summaries(self.effectiveness_list, "Effectiveness")
+        #     self.overall_score_list = tf.placeholder(shape=[None], dtype=tf.float32, name="OverallScoreList")
+        #     variable_summaries(self.overall_score_list, "OverallScore")
 
     def __str__(self):
         return "HandoverPenaltyReward({effectiveness}: {factors}".format(

@@ -1,6 +1,5 @@
 import tensorflow as tf
 import numpy as np
-import datetime
 import random
 import time
 from abc import abstractmethod
@@ -12,7 +11,7 @@ from utils import variable_summaries
 
 
 class Agent:
-    def __init__(self, name, env, date, num_episode, num_step):
+    def __init__(self, name, env, datetime, num_episode, num_step):
         self.name = name
 
         assert isinstance(env, Environment)
@@ -23,89 +22,96 @@ class Agent:
         self.num_step = num_step
 
         # Date of now, for logging
-        self.date = date
+        self.datetime = datetime
 
-        with tf.variable_scope("Summary"):
-            """ Summary """
-            self.loss_list = tf.placeholder(shape=[None], dtype=tf.float32, name="LossList")
-            variable_summaries(self.loss_list, "Loss")
-            self.execution_time_list = tf.placeholder(shape=[None], dtype=tf.float32, name="ExecutionTImeList")
-            variable_summaries(self.execution_time_list, "ExecutionTime")
+        self.train_summary_writer = tf.summary.create_file_writer(
+            './summary/{name}/{date}/train'.format(name=self.name, date=self.datetime))
+        self.test_summary_writer = tf.summary.create_file_writer(
+            './summary/{name}/{date}/test'.format(name=self.name, date=self.datetime))
 
-        self.summary = tf.summary.merge_all()
+        # with tf.variable_scope("Summary"):
+        #     """ Summary """
+        #     self.loss_list = tf.placeholder(shape=[None], dtype=tf.float32, name="LossList")
+        #     variable_summaries(self.loss_list, "Loss")
+        #     self.execution_time_list = tf.placeholder(shape=[None], dtype=tf.float32, name="ExecutionTImeList")
+        #     variable_summaries(self.execution_time_list, "ExecutionTime")
+        #
+        # self.summary = tf.summary.merge_all()
 
     @abstractmethod
-    def selection(self, sess, user, services):
+    def selection(self, user, services):
         """ return selected service object and its index """
         return None, 0
 
-    def train(self, sess):
+    def train(self):
         pass
 
-    def test(self, sess):
+    def test(self):
         print("Test phase")
+        with self.test_summary_writer.as_default():
+            for i_episode in range(self.num_episode):
+                print("Episode %d" % i_episode)
+                #random.seed(i_episode)
 
-        writer = tf.summary.FileWriter('./summary/{name}/{date}/test'.format(name=self.name, date=self.date),
-                                       sess.graph)
+                reward_list = []
+                execution_time_list = []
+                observation = self.env.reset()
 
-        for i_episode in range(self.num_episode):
-            print("Episode %d" % i_episode)
-            #random.seed(i_episode)
+                """ 
+                since service selection is non-episodic task, 
+                restrict maximum step rather than observe done-signal 
+                """
+                for i_step in range(self.num_step):
+                    start_time = time.time()
+                    """ select action """
+                    action, _ = self.selection(observation["user"], observation["services"])
+                    execution_time_list.append(time.time() - start_time)
+                    """ perform the selected action on the environment """
+                    observation, reward, done = self.env.step(action)
+                    """ add reward to total score """
+                    reward_list.append(reward.get_overall_score())
 
-            reward_list = []
-            execution_time_list = []
-            observation = self.env.reset()
+                    if done:
+                        break
 
-            """ since service selection is non-episodic task, restrict maximum step rather than observe done-signal """
-            for i_step in range(self.num_step):
-                start_time = time.time()
-                """ select action """
-                action, _ = self.selection(sess, observation["user"], observation["services"])
-                execution_time_list.append(time.time() - start_time)
-                """ perform the selected action on the environment """
-                observation, reward, done = self.env.step(action)
-                """ add reward to total score """
-                reward_list.append(reward)
+                """ summaries """
+                variable_summaries('execution_time', execution_time_list, step=i_episode)
+                variable_summaries('reward', reward_list, step=i_episode)
+                print("Episode {i} ends with average reward {reward}".format(i=i_episode,
+                                                                            reward=np.mean(reward_list)))
 
-                if done:
-                    break
-
-            self.summarize_episode(sess, writer, i_episode, [], reward_list, execution_time_list)
-            print("Episode {i} ends with average score {reward}".format(i=i_episode,
-                                                                        reward=np.mean(reward_list)))
-
-    def summarize_episode(self, sess, writer, i_episode, loss_list, reward_list, execution_time_list):
-        feed_dict = self.env.reward_function.get_summary_feed_dict(reward_list)
-        feed_dict[self.loss_list] = loss_list
-        feed_dict[self.execution_time_list] = execution_time_list
-        writer.add_summary(
-            sess.run(self.summary, feed_dict=feed_dict),
-            i_episode
-        )
+    # def summarize_episode(self, sess, writer, i_episode, loss_list, reward_list, execution_time_list):
+    #     feed_dict = self.env.reward_function.get_summary_feed_dict(reward_list)
+    #     feed_dict[self.loss_list] = loss_list
+    #     feed_dict[self.execution_time_list] = execution_time_list
+    #     writer.add_summary(
+    #         sess.run(self.summary, feed_dict=feed_dict),
+    #         i_episode
+    #     )
 
 
 class RandomSelectionAgent(Agent):
     """ RandomSelectionAgent: a baseline agent that selects services randomly """
-    def selection(self, sess, user, services):
+    def selection(self, user, services):
         index = random.choice(range(len(services)))
         return services[index], index
 
 
 class NearestSelectionAgent(Agent):
     """ ClosestSelectionAgent: a baseline agent that selects the nearest service"""
-    def selection(self, sess, user, services):
+    def selection(self, user, services):
         minimum = 1000000
         index = -1
         for i in range(len(services)):
-            if user.distance(services[i].device) < minimum:
+            if user.get_distance(services[i].device) < minimum:
                 index = i
-                minimum = user.distance(services[i].device)
+                minimum = user.get_distance(services[i].device)
         return services[index], index
 
 
 class NoHandoverSelectionAgent(Agent):
     """ NoHandoverSelectionAgent: a baseline agent that minimizes the number of handovers """
-    def selection(self, sess, user, services):
+    def selection(self, user, services):
         for i in range(len(services)):
             if services[i].in_use and services[i].user == user:
                 return services[i], i
@@ -157,7 +163,7 @@ class EDSSAgentDQN(Agent):
         print("Train phase")
 
         writer = tf.summary.FileWriter('{path}/{name}/{date}/train'.format(path=tf.flags.FLAGS.summary_path,
-                                                                           name=self.name, date=self.date),
+                                                                           name=self.name, date=self.datetime),
                                        sess.graph)
 
         """ Epsilon greedy configuration """

@@ -9,27 +9,39 @@ from reinforcement_learning.reward import RewardFunction
 
 
 class Configuration:
-    def __init__(self, num_device, width, height, depth, device_size_min, device_size_max,
+    """ Configuration: class contains configurations for experiments """
+    def __init__(self,
+                 # environmental configurations
+                 num_user, num_service, width, height, depth, observation,
+                 user_constructor, service_constructor,
                  max_speed,
-                 observation,
                  reward_function,
+
+                 # learning configurations
                  num_episode, num_step,
                  memory_size, batch_size, learning_rate, discount_factor,
-                 eps_init, eps_final,
-                 agent):
+                 eps_init, eps_final, eps_decay,
+                 agent,
+
+                 datetime,
+                 summary_path):
+        """ __init__: simply add all the given parameters as its attributes """
         # Environment
-        self.num_device = num_device
+        self.num_user = num_user
+        self.num_service = num_service
         self.width = width
         self.height = height
         self.depth = depth
-        self.device_size_min = device_size_min
-        self.device_size_max = device_size_max
+
+        # Observation
+        self.observation = observation
 
         # Dynamics
         self.max_speed = max_speed
 
-        # Observation
-        self.observation = observation
+        # Constructors
+        self.user_constructor = user_constructor
+        self.service_constructor = service_constructor
 
         # Reward
         self.reward_function = reward_function
@@ -46,20 +58,24 @@ class Configuration:
         # Epsilon-greedy policy
         self.eps_init = eps_init
         self.eps_final = eps_final
-        # set decaying rate according to the number of episodes: to make epsilon reaches eps_final at the end
-        self.eps_decay = np.power(eps_final/eps_init, 1 / self.num_episode)
+        self.eps_decay = eps_decay
 
         self.agent = agent
 
-    def save(self, name, date):
+        # Summary
+        self.datetime = datetime
+        self.summary_path = summary_path
+
+    def save(self):
         class CustomEncoder(json.JSONEncoder):
             def default(self, obj):
-                if isinstance(obj, Observation) or isinstance(obj, RewardFunction):
+                try:
+                    return json.JSONEncoder.default(self, obj)
+                except TypeError:
                     return str(obj)
-                return json.JSONEncoder.default(self, obj)
-        file_path = "{path}/{name}/{date}/configuration.txt".format(path=tf.flags.FLAGS.summary_path,
-                                                                    name=name,
-                                                                    date=date)
+
+
+        file_path = self.summary_path
         if not os.path.exists(os.path.dirname(file_path)):
             try:
                 os.makedirs(os.path.dirname(file_path))

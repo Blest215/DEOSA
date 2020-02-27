@@ -2,21 +2,32 @@ import numpy as np
 import random
 from abc import abstractmethod
 
-from models.mobility import Coordinate, Mobility, StaticMobility
-from models.orientation import Orientation, Rotation
+from models.physics import Coordinate, Mobility, StaticMobility, Rotation, Orientation
 from models.math import Vector
 
 
-class Service:
+class Entity:
+    """ Entity: a very basic class for any cyber or physical entity """
+
+    def vectorize(self):
+        """ vectorize: returns vector representation of the entity """
+        return []
+
+    def update(self):
+        """ update: updates the states of the entity, call for each environment step """
+        pass
+
+
+class Service(Entity):
     """ Service: a basic class that represents service instances """
     def __init__(self, name, service_type, device=None):
         self.name = name
         self.type = service_type
 
-        """ Type of associated device should be Device """
         # TODO currently, service - device is one-to-one matching
-        assert isinstance(device, Device)
-        self.device = device
+        if device:
+            assert isinstance(device, DisplayDevice)
+            self.device = device
 
         """ Flag: whether the service is in use or not """
         self.in_use = False
@@ -39,9 +50,11 @@ class Service:
         self.user = None
 
     def update(self):
+        """ update: updates the states of the service, including device status """
         self.device.update()
 
     def vectorize(self):
+        """ vectorize: returns vector representation of the service """
         # TODO vector representation of services: multi-user situation
         if self.in_use:
             return self.device.vectorize() + [1]
@@ -49,39 +62,35 @@ class Service:
             return self.device.vectorize() + [0]
 
 
-class Body:
+class Body(Entity):
     """ Body: physical body class, mainly deals with coordinate and mobility """
     def __init__(self, coordinate, mobility):
-        """ mobility of the body """
         assert isinstance(mobility, Mobility)
         self.mobility = mobility
 
-        """ coordinate of the body """
         assert isinstance(coordinate, Coordinate)
         self.coordinate = coordinate
 
     def get_coordinate(self):
-        return self.coordinate.get()
+        """ get_coordinate: get current coordinate of the body """
+        return self.coordinate.unpack()
 
-    def distance(self, other):
+    def get_distance(self, other):
+        """ distance: calculate distance from another Body"""
         assert isinstance(other, Body)
-        return self.coordinate.distance(other.coordinate)
+        return self.coordinate.get_distance(other.coordinate)
 
     def move(self):
+        """ move: update the coordinate of the body according to its mobility """
         self.mobility.update(self.coordinate)
 
-    @abstractmethod
-    def vectorize(self):
-        return []
 
+class DisplayDevice(Body):
+    """ DisplayDevice: a class that represents display devices """
 
-class Device(Body):
-    """ Device: a basic class that represents devices """
-
-    def __init__(self, name, device_type, coordinate, mobility, orientation, size):
+    def __init__(self, name, coordinate, mobility, orientation, size):
         Body.__init__(self, coordinate, mobility)
         self.name = name
-        self.type = device_type
 
         assert isinstance(orientation, Orientation)
         self.orientation = orientation
@@ -89,10 +98,9 @@ class Device(Body):
         self.size = size
 
     def __str__(self):
-        return "Device {name}, type {type} at {coordinate}, {orientation}".format(name=self.name,
-                                                                                  type=self.type,
-                                                                                  coordinate=self.coordinate,
-                                                                                  orientation=self.orientation)
+        return "Display device {name}, at {coordinate}, {orientation}".format(name=self.name,
+                                                                              coordinate=self.coordinate,
+                                                                              orientation=self.orientation)
 
     def update(self):
         self.move()

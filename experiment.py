@@ -1,4 +1,4 @@
-from models.environment import SingleUserSingleServicePartialObservableEnvironment
+from models.environment import Environment
 from reinforcement_learning.agent import *
 
 
@@ -12,43 +12,41 @@ class Experiment:
         pass
 
 
-class EffectDrivenServiceSelectionExperiment(Experiment):
+class EffectDrivenMediumSelectionExperiment(Experiment):
     """
-        EffectDrivenServiceSelectionExperiment
-        
-        Experiment done on the SingleUserSingleServicePartialObservable3DEnvironment
+        EffectDrivenMediumSelectionExperiment: Effect-driven and dynamic selection of physical media
     """
     def __init__(self, configuration):
         self.configuration = configuration
 
-        self.env = SingleUserSingleServicePartialObservableEnvironment(service_type='visual',
-                                                                       num_device=configuration.num_device,
-                                                                       width=configuration.width,
-                                                                       height=configuration.height,
-                                                                       depth=configuration.depth,
-                                                                       device_size_min=configuration.device_size_min,
-                                                                       device_size_max=configuration.device_size_max,
-                                                                       max_speed=configuration.max_speed,
-                                                                       observation=configuration.observation,
-                                                                       reward_function=configuration.reward_function)
+        self.env = Environment(num_user=configuration.num_user,
+                               num_service=configuration.num_service,
+                               width=configuration.width,
+                               height=configuration.height,
+                               depth=configuration.depth,
+                               observation=configuration.observation,
+                               user_constructor=configuration.user_constructor,
+                               service_constructor=configuration.service_constructor,
+                               reward_function=configuration.reward_function)
+
         self.num_episode = configuration.num_episode
         self.num_step = configuration.num_step
         self.memory_size = configuration.memory_size
         self.batch_size = configuration.batch_size
 
-        self.date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        self.datetime = configuration.datetime
 
         """ In the code, only one agent should be constructed, Otherwise, error occurs in summary """
         if configuration.agent == "random":
-            self.agent = RandomSelectionAgent("Random", self.env, self.date, self.num_episode, self.num_step)
+            self.agent = RandomSelectionAgent("Random", self.env, self.datetime, self.num_episode, self.num_step)
         if configuration.agent == "nearest":
-            self.agent = NearestSelectionAgent("Nearest", self.env, self.date, self.num_episode, self.num_step)
+            self.agent = NearestSelectionAgent("Nearest", self.env, self.datetime, self.num_episode, self.num_step)
         if configuration.agent == "nohandover":
-            self.agent = NoHandoverSelectionAgent("NoHandover", self.env, self.date, self.num_episode, self.num_step)
+            self.agent = NoHandoverSelectionAgent("NoHandover", self.env, self.datetime, self.num_episode, self.num_step)
         if configuration.agent == "greedy":
-            self.agent = GreedySelectionAgent("Greedy", self.env, self.date, self.num_episode, self.num_step)
+            self.agent = GreedySelectionAgent("Greedy", self.env, self.datetime, self.num_episode, self.num_step)
         if configuration.agent == "EDSS(DQN)":
-            self.agent = EDSSAgentDQN("EDSS(DQN)", self.env, self.date, self.num_episode, self.num_step,
+            self.agent = EDSSAgentDQN("EDSS(DQN)", self.env, self.datetime, self.num_episode, self.num_step,
                                       memory_size=self.memory_size,
                                       batch_size=self.batch_size,
                                       learning_rate=configuration.learning_rate,
@@ -61,11 +59,6 @@ class EffectDrivenServiceSelectionExperiment(Experiment):
         self.env.reset()
 
     def run(self):
-        self.configuration.save(name=self.configuration.agent,
-                                date=self.date)
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
-
-            self.agent.train(sess)
-            self.agent.test(sess)
-
+        self.configuration.save()
+        # self.agent.train()
+        self.agent.test()

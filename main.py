@@ -1,33 +1,58 @@
 import tensorflow as tf
 import argparse
+import datetime
 
 from configuration import Configuration
-from experiment import EffectDrivenServiceSelectionExperiment
-from models.observation import EuclideanObservation, FullObservation
-from models.effectiveness import VisualEffectiveness
+from experiment import EffectDrivenMediumSelectionExperiment
 from reinforcement_learning.reward import HandoverPenaltyRewardFunction
 
+from models.observation import EuclideanObservation, FullObservation
+from models.effectiveness import VisualEffectiveness
+from models.entity import User, Service, DisplayDevice
+from models.physics import *
+from models.constructor import get_user_constructor, get_visual_service_constructor
 
-flags = tf.flags
-FLAGS = tf.flags.FLAGS
 
-flags.DEFINE_string('summary_path', "./summary", 'Path of summary files')
+""" format of path that collects summary for each experiment """
+SUMMARY_PATH = "./summary/{agent}/{date}/{file}"
+
+
+def get_summary_path(agent, date, filename):
+    """ get_summary_path: returns a file path for collecting summary for each experiment """
+    return SUMMARY_PATH.format(agent=agent, date=date, file=filename)
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument("agent", help="name of agent to simulate")
+parser.add_argument("agent", help="the name of agent to simulate")
 args = parser.parse_args()
 
 
 def main():
-    conf = Configuration(num_device=100,
-                         width=200,
-                         height=10,
-                         depth=3,
-                         device_size_min=0.5,
-                         device_size_max=2,
-                         max_speed=1,
+    """
+        Environment settings
+            - single user
+            - single service selected
+            - one-to-one matching between services and devices
+            - partial observation based on Euclidean-distance
+            - 3-dimensional space
+    """
+    width = 200
+    height = 10
+    depth = 3
+    max_speed = 1
+    now = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+    conf = Configuration(num_user=1,
+                         num_service=100,
+                         width=width,
+                         height=height,
+                         depth=depth,
+                         max_speed=max_speed,
                          observation=EuclideanObservation(observation_range=10),
                          #observation=FullObservation(),
+
+                         user_constructor=get_user_constructor(width, height, depth, max_speed),
+                         service_constructor=get_visual_service_constructor(width, height, depth),
                          reward_function=HandoverPenaltyRewardFunction(effectiveness=VisualEffectiveness(
                              text_size_pixel=27,
                              resolution=1080,
@@ -35,6 +60,7 @@ def main():
                              FoV_angle_max=105,
                              face_angle_max=90
                          )),
+
                          num_episode=1000,
                          num_step=100,
                          memory_size=1000,
@@ -43,10 +69,14 @@ def main():
                          discount_factor=.95,
                          eps_init=1.0,
                          eps_final=1e-2,
-                         agent=args.agent)
+                         # set decaying rate according to the number of episodes: to make epsilon reaches eps_final at the end
+                         eps_decay=np.power(1e-2/1.0, 1 / 1000),
+                         agent=args.agent,
+                         datetime=now,
+                         summary_path=get_summary_path(agent=args.agent, date=now, filename="configuration.txt"))
 
     """ unit of distance is Meter """
-    experiment = EffectDrivenServiceSelectionExperiment(configuration=conf)
+    experiment = EffectDrivenMediumSelectionExperiment(configuration=conf)
     experiment.run()
 
 

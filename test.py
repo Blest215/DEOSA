@@ -2,7 +2,7 @@ import numpy as np
 import random
 from abc import abstractmethod
 
-from models.orientation import Rotation
+from models.physics import Rotation
 from models.math import Vector, Quaternion
 
 

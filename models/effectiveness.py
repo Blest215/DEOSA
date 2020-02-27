@@ -14,7 +14,7 @@ class Effectiveness:
 class DistanceEffectiveness(Effectiveness):
     """ DistanceEffectiveness: effectiveness model simply measures distance between the user and the service """
     def measure(self, user, service, context=None):
-        return 1/user.distance(service.device)
+        return 1/user.get_distance(service.device)
 
 
 class VisualEffectiveness(Effectiveness):
@@ -34,7 +34,7 @@ class VisualEffectiveness(Effectiveness):
         """
         # actual text size shown on display, assuming FHD 1080p resolution
         text_size = service.device.size * self.text_size_pixel / self.resolution
-        visual_angle = np.degrees(2 * np.arctan(text_size / (2 * user.distance(service.device))))
+        visual_angle = np.degrees(2 * np.arctan(text_size / (2 * user.get_distance(service.device))))
         """
             "the size of a letter on the Snellen chart of Landolt C chart is a visual angle of 5 arc minutes"
             https://en.wikipedia.org/wiki/Visual_acuity 

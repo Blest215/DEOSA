@@ -8,44 +8,60 @@ class Vector:
         self.y = y
         self.z = z
 
-    def get(self):
+    def unpack(self):
+        """ unpack: unpacks the elements of the vector """
         return self.x, self.y, self.z
 
     def update(self, x, y, z):
+        """ update: updates the elements of the vector """
         self.x = x
         self.y = y
         self.z = z
 
     def vectorize(self):
+        """ vectorize: returns list form of the vector, for concatenation with other lists """
         return [self.x, self.y, self.z]
 
     def dot(self, other):
+        """ dot: performs dot product of vectors """
         return self.x * other.x + self.y * other.y + self.z * other.z
 
     def cross(self, other):
-        return Vector(self.y*other.z - self.z*other.y,
-                      self.z*other.x - self.x*other.z,
-                      self.x*other.y - self.y*other.x)
+        """ cross: performs cross product of vectors """
+        return Vector(self.y * other.z - self.z * other.y,
+                      self.z * other.x - self.x * other.z,
+                      self.x * other.y - self.y * other.x)
 
     def size(self):
+        """ size: returns the size of the vector """
         return np.sqrt(np.square(self.x) + np.square(self.y) + np.square(self.z))
 
-    def projection(self, target):
-        assert isinstance(target, Vector)
-        return (self.dot(target) / target.size()) * (target / target.size())
+    def projection(self, other):
+        """ projection: performs projection on a plane defined by a tangent vector """
+        assert isinstance(other, Vector)
+        return (self.dot(other) / other.size()) * (other / other.size())
 
-    def scalar_projection(self, target):
-        assert isinstance(target, Vector)
-        return self.dot(target) / target.size()
+    def scalar_projection(self, other):
+        """ scalar_projection: performs projection but returns the size of the projection vector only """
+        assert isinstance(other, Vector)
+        return self.dot(other) / other.size()
 
-    def get_cosine_angle(self, target):
-        assert isinstance(target, Vector)
-        return self.dot(target) / (self.size() * target.size())
+    def get_cosine_angle(self, other):
+        """ get_cosine_angle: calculates cosine value between the vector and target vector """
+        assert isinstance(other, Vector)
+        return self.dot(other) / (self.size() * other.size())
 
-    def get_angle(self, target):
-        return np.degrees(np.arccos(self.get_cosine_angle(target)))
+    def get_angle(self, other):
+        """ get_angle: calculates angle between the vector and target vector, in degree scale """
+        return np.degrees(np.arccos(self.get_cosine_angle(other)))
+
+    def to_unit(self):
+        """ to_unit: converts the vector to a unit vector that is parallel to the vector but size 1 """
+        denominator = np.sqrt(np.square(self.x) + np.square(self.y) + np.square(self.z))
+        return Vector(x=self.x/denominator, y=self.y/denominator, z=self.z/denominator)
 
     def to_quaternion(self):
+        """ to_quaternion: convert the vector to quaternion which w value is 0 """
         return Quaternion(0, self.x, self.y, self.z)
 
     def __str__(self):
@@ -87,28 +103,35 @@ class Quaternion:
         self.j = j
         self.k = k
 
-    def get(self):
+    def unpack(self):
+        """ unpack: unpacks the elements of the quaternion """
         return self.w, self.i, self.j, self.k
 
     def update(self, w, i, j, k):
+        """ update: updates the elements of the quaternion """
         self.w = w
         self.i = i
         self.j = j
         self.k = k
 
     def vectorize(self):
+        """ vectorize: returns list form of the quaternion, , for concatenation with other lists """
         return [self.w, self.i, self.j, self.k]
 
     def get_vector_part(self):
+        """ get_vector_part: returns only vector part of the quaternion as an instance of Vector class """
         return Vector(self.i, self.j, self.k)
 
     def get_scalar_part(self):
+        """ get_scalar_part: returns only scalar part of the quaternion """
         return self.w
 
     def get_conjugate(self):
+        """ get_conjugate: returns conjugate quaternion of the quaternion """
         return Quaternion(self.w, -self.i, -self.j, -self.k)
 
     def is_unit(self):
+        """ is_unit: examines whether the size of the quaternion is 1 or not """
         return np.square(self.w) + np.square(self.i) + np.square(self.j) + np.square(self.k) == 1.
 
     def __str__(self):
