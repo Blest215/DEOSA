@@ -1,4 +1,7 @@
 import tensorflow as tf
+import os
+
+from configuration import SUMMARY_PATH
 
 
 def clamp(value, min_value, max_value):
@@ -14,3 +17,8 @@ def variable_summaries(variable_name, values, step):
         tf.summary.scalar('max', tf.reduce_max(values), step)
         tf.summary.scalar('min', tf.reduce_min(values), step)
         # tf.summary.histogram('histogram', var)
+
+
+def get_summary_path(agent, date, filename):
+    """ get_summary_path: returns a file path for collecting summary for each experiment """
+    return os.path.join(SUMMARY_PATH, agent, date, filename)

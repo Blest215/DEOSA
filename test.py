@@ -2,8 +2,7 @@ import numpy as np
 import random
 from abc import abstractmethod
 
-from models.physics import Rotation
-from models.math import Vector, Quaternion
+from models.math import Vector, Quaternion, Rotation
 
 
 class Test:

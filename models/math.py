@@ -154,3 +154,22 @@ class Quaternion:
             j=other.w*self.j - other.i*self.k + other.j*self.w + other.k*self.i,
             k=other.w*self.k + other.i*self.j - other.j*self.i + other.k*self.w
         )
+
+
+class Rotation(Quaternion):
+    """ Rotation: class of rotation quaternion, receives axis and angle, then construct unit rotation vector """
+    def __init__(self, theta, i, j, k):
+        assert -2 * np.pi <= theta <= 2 * np.pi  # theta is radian
+
+        """ Rotation should be a unit vector """
+        denominator = np.square(i) + np.square(j) + np.square(k)
+        Quaternion.__init__(
+            self,
+            w=np.cos(theta / 2),
+            i=np.sign(i) * np.sqrt(np.square(i) / denominator) * np.sin(theta / 2),
+            j=np.sign(j) * np.sqrt(np.square(j) / denominator) * np.sin(theta / 2),
+            k=np.sign(k) * np.sqrt(np.square(k) / denominator) * np.sin(theta / 2)
+        )
+
+    def rotate(self, quaternion):
+        return self * quaternion * self.get_conjugate()

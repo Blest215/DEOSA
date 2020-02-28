@@ -4,8 +4,7 @@ import json
 import os
 import errno
 
-from models.observation import Observation
-from reinforcement_learning.reward import RewardFunction
+SUMMARY_PATH = os.path.join(os.path.dirname(__file__), "summary")
 
 
 class Configuration:

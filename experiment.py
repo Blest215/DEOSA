@@ -1,5 +1,7 @@
-from models.environment import Environment
-from reinforcement_learning.agent import *
+from reinforcement_learning.agent.agent import *
+from reinforcement_learning.agent.baselines import RandomSelectionAgent, NearestSelectionAgent, \
+    NoHandoverSelectionAgent, GreedySelectionAgent
+from reinforcement_learning.agent.dqn import EDMSAgentDQN
 
 
 class Experiment:
@@ -60,5 +62,5 @@ class EffectDrivenMediumSelectionExperiment(Experiment):
 
     def run(self):
         self.configuration.save()
-        with tf.device('/GPU:1'):
+        with tf.device('GPU:1'):
             self.agent.run("train")

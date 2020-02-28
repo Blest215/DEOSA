@@ -1,4 +1,3 @@
-import tensorflow as tf
 import argparse
 import datetime
 
@@ -6,21 +5,13 @@ from configuration import Configuration
 from experiment import EffectDrivenMediumSelectionExperiment
 from reinforcement_learning.reward import HandoverPenaltyRewardFunction
 
-from models.observation import EuclideanObservation, FullObservation
+from models.environment.observation import EuclideanObservation
 from models.effectiveness import VisualEffectiveness
-from models.entity import User, Service, DisplayDevice
-from models.physics import *
-from models.constructor import UserConstructor, VisualServiceConstructor
-
+from models.entity.service import VisualServiceConstructor
+from models.entity.user import UserConstructor
+from utils import get_summary_path
 
 """ format of path that collects summary for each experiment """
-SUMMARY_PATH = "./summary/{agent}/{date}/{file}"
-
-
-def get_summary_path(agent, date, filename):
-    """ get_summary_path: returns a file path for collecting summary for each experiment """
-    return SUMMARY_PATH.format(agent=agent, date=date, file=filename)
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("agent", help="the name of agent to simulate")

@@ -1,16 +1,18 @@
 """ Plot visual service effectiveness model on 2-dimensional space """
 
-from mpl_toolkits.mplot3d import Axes3D
-
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import cm
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
-from models.entity import User, DisplayDevice, Service
-from models.physics import Direction, Coordinate, StaticMobility, generate_horizontal_direction_specific_speed_mobility, \
-    generate_custom_mobility, Orientation, generate_random_orientation
+from models.entity.entity import User
+from models.entity.entity import DisplayDevice
+from models.entity.entity import Service
+from models.physics.orientation import Orientation
+from models.physics.mobility import generate_custom_mobility, \
+    StaticMobility
+from models.physics.direction import Direction
+from models.physics.coordinate import Coordinate
 from models.effectiveness import VisualEffectiveness
 
 

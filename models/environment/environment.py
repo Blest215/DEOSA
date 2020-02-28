@@ -1,14 +1,7 @@
-from abc import abstractmethod
-
-import matplotlib
 import matplotlib.pyplot as plt
 
-from models.entity import User, DisplayDevice, Service
-from models.physics import *
-from models.physics import generate_random_orientation, generate_random_vertical_orientation, \
-    generate_random_half_line_orientation
-from models.observation import Observation
-from models.effectiveness import Effectiveness, DistanceEffectiveness, VisualEffectiveness
+from models.entity.service import Service
+from models.environment.observation import Observation
 from reinforcement_learning.reward import RewardFunction
 
 
