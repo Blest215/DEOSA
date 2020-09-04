@@ -63,12 +63,12 @@ class PenaltyReward(Reward):
 
 class RewardFunction:
     """ RewardFunction: abstract class for reward signal models """
-    @abstractmethod
-    def measure(self, user, service, context=None):
-        pass
+    def __init__(self):
+        self.__setting__ = self.__dict__.copy()
+        self.__setting__["name"] = type(self).__name__
 
     @abstractmethod
-    def __str__(self):
+    def measure(self, user, service, context=None):
         pass
 
 
@@ -78,11 +78,7 @@ class HandoverPenaltyRewardFunction(RewardFunction):
         assert isinstance(effectiveness, Effectiveness)
         self.effectiveness = effectiveness
 
-    def __str__(self):
-        return "HandoverPenaltyReward({effectiveness}: {factors}".format(
-            effectiveness=type(self.effectiveness).__name__,
-            factors=json.dumps(self.effectiveness.__dict__)
-        )
+        super().__init__()
 
     def measure(self, user, service, context=None):
         """ Handover """

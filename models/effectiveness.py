@@ -26,6 +26,8 @@ class VisualEffectiveness(Effectiveness):
         self.FoV_angle_max = FoV_angle_max
         self.face_angle_max = face_angle_max
 
+        self.__setting__ = self.__dict__.copy()
+
     def measure(self, user, service, context=None):
         """ Visual angle """
         """ 

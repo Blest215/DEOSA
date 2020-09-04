@@ -14,8 +14,8 @@ class Entity:
         pass
 
 
-class Body(Entity):
-    """ Body: physical body class, mainly deals with coordinate and mobility """
+class PhysicalEntity(Entity):
+    """ PhysicalEntity: physical body class, mainly deals with coordinate and mobility """
     def __init__(self, coordinate, mobility):
         assert isinstance(mobility, Mobility)
         self.mobility = mobility
@@ -29,7 +29,7 @@ class Body(Entity):
 
     def get_distance(self, other):
         """ distance: calculate distance from another Body"""
-        assert isinstance(other, Body)
+        assert isinstance(other, PhysicalEntity)
         return self.coordinate.get_distance(other.coordinate)
 
     def move(self):

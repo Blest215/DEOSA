@@ -5,6 +5,13 @@ from abc import abstractmethod
 
 
 class ExperienceMemory:
+    def __init__(self, size):
+        self.memory = []
+        self.size = size
+
+        self.__setting__ = self.__dict__.copy()
+        self.__setting__["name"] = type(self).__name__
+
     @abstractmethod
     def add(self, observation, action, reward, next_observation, done):
         pass
@@ -25,8 +32,7 @@ class ExperienceMemory:
 # Basic experience memory that randomly sampling experiences for DQN
 class BasicExperienceMemory(ExperienceMemory):
     def __init__(self, size):
-        self.memory = []
-        self.size = size
+        super().__init__(size)
 
     def add(self, observation, action, reward, next_observation, done):
         while self.is_full():
@@ -57,9 +63,9 @@ class BasicExperienceMemory(ExperienceMemory):
 # Balancing experience memory that balancing reward distribution
 class BalancingExperienceMemory(ExperienceMemory):
     def __init__(self, size):
-        self.memory = []
-        self.size = size
         self.count = {}
+
+        super().__init__(size)
 
     def add(self, observation, action, reward, next_observation, done):
         while self.is_full():

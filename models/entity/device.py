@@ -1,13 +1,13 @@
-from models.entity.entity import Body
+from models.entity.entity import PhysicalEntity
 from models.physics.mobility import StaticMobility
 from models.physics.orientation import Orientation
 
 
-class DisplayDevice(Body):
+class DisplayDevice(PhysicalEntity):
     """ DisplayDevice: a class that represents display devices """
 
     def __init__(self, name, coordinate, mobility, orientation, size):
-        Body.__init__(self, coordinate, mobility)
+        PhysicalEntity.__init__(self, coordinate, mobility)
         self.name = name
 
         assert isinstance(orientation, Orientation)

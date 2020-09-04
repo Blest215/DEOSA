@@ -1,16 +1,16 @@
 import numpy as np
 
-from models.entity.entity import Body
+from models.entity.entity import PhysicalEntity
 from models.math import Rotation, Vector
 from models.physics.coordinate import generate_custom_coordinate
 from models.physics.direction import generate_custom_direction
 from models.physics.mobility import generate_custom_mobility
 
 
-class User(Body):
+class User(PhysicalEntity):
     """ User: a basic class that represents users """
     def __init__(self, uid, coordinate, mobility):
-        Body.__init__(self, coordinate, mobility)
+        PhysicalEntity.__init__(self, coordinate, mobility)
         self.uid = uid
         self.service = None
 

@@ -8,27 +8,22 @@ from utils import variable_summaries, get_summary_path
 
 
 class Agent:
-    def __init__(self, name, env, datetime, num_episode, num_step):
-        self.name = name
+    def __init__(self, env, now):
+        self.name = type(self).__name__
+
+        self.__setting__ = self.__dict__.copy()
 
         assert isinstance(env, Environment)
         self.env = env
-
-        """ training configuration """
-        self.num_episode = num_episode
-        self.num_step = num_step
-
-        """ date of now, for logging """
-        self.datetime = datetime
 
         """ whether performing training or not """
         self.train = False
 
         """ summary writers of TensorFlow """
         self.train_summary_writer = tf.summary.create_file_writer(
-            get_summary_path(self.name, self.datetime, "train"))
+            get_summary_path(self.name, now, "train"))
         self.test_summary_writer = tf.summary.create_file_writer(
-            get_summary_path(self.name, self.datetime, "test"))
+            get_summary_path(self.name, now, "test"))
 
     @abstractmethod
     def selection(self, user, services):
@@ -42,7 +37,7 @@ class Agent:
     def learn(self, observation, action_index, reward, next_observation, done):
         pass
 
-    def run(self, mode="test"):
+    def run(self, num_episode, num_step, mode="test"):
         """ run: run train or test simulations according to the given mode """
 
         """ set training or testing mode according to command """
@@ -57,8 +52,9 @@ class Agent:
 
         tf.summary.trace_on()
         with writer.as_default():
-            for i_episode in range(self.num_episode):
+            for i_episode in range(num_episode):
                 print("Episode %d" % i_episode)
+                tf.summary.experimental.set_step(i_episode)
                 # random.seed(i_episode)
 
                 loss_list = []  # only for training mode
@@ -70,7 +66,7 @@ class Agent:
                 since service selection is non-episodic task, 
                 restrict maximum step rather than observe done-signal 
                 """
-                for i_step in range(self.num_step):
+                for i_step in range(num_step):
                     start_time = time.time()
                     """ select action """
                     action, action_index = self.selection(observation["user"], observation["services"])
@@ -104,4 +100,4 @@ class Agent:
                     variable_summaries('loss', loss_list, step=i_episode)
                     print("Average loss was: {loss}".format(loss=np.mean(loss_list)))
 
-            tf.summary.trace_export()
+            tf.summary.trace_export(name="EDMS agent (DQN version) experiment")

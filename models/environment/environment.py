@@ -29,7 +29,6 @@ class Environment:
         """ observation: observation model """
         assert isinstance(observation, Observation)
         self.observation = observation
-        self.observation.set_environment(self)
 
         """ user_constructor: constructor function for users """
         self.user_constructor = user_constructor
@@ -38,6 +37,8 @@ class Environment:
         """ reward: reward model """
         assert isinstance(reward_function, RewardFunction)
         self.reward_function = reward_function
+
+        self.__setting__ = self.__dict__.copy()
 
         """ user: main user that utilizes services """
         self.user = None
@@ -86,7 +87,7 @@ class Environment:
 
     def get_observation(self):
         """ return observation in both dictionary format """
-        return self.observation.get_observation()
+        return self.observation.get_observation(self)
 
     def get_observation_size(self):
         return len(self.user.vectorize())

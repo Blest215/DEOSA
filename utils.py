@@ -1,7 +1,9 @@
 import tensorflow as tf
+import json
 import os
 
-from configuration import SUMMARY_PATH
+""" format of path that collects summary for each experiment """
+SUMMARY_PATH = os.path.join(os.path.dirname(__file__), "summary")
 
 
 def clamp(value, min_value, max_value):
@@ -19,6 +21,6 @@ def variable_summaries(variable_name, values, step):
         # tf.summary.histogram('histogram', var)
 
 
-def get_summary_path(agent, date, filename):
+def get_summary_path(agent, datetime, filename):
     """ get_summary_path: returns a file path for collecting summary for each experiment """
-    return os.path.join(SUMMARY_PATH, agent, date, filename)
+    return os.path.join(SUMMARY_PATH, agent, datetime, filename)

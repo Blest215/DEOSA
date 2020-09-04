@@ -8,16 +8,21 @@ from reinforcement_learning.network.dqn import EDMSNetworkDQN
 
 
 class EDMSAgentDQN(Agent):
-    def __init__(self, name, env, date, num_episode, num_step,
+    def __init__(self, env, now,
                  memory_size, batch_size, learning_rate, discount_factor,
+                 hidden_units, activation,
                  eps_init, eps_final, eps_decay):
-        Agent.__init__(self, name, env, date, num_episode, num_step)
 
-        self.main_network = EDMSNetworkDQN(observation_size=self.env.get_observation_size(),
+        self.learning_rate = learning_rate
+        self.discount_factor = discount_factor
+        self.hidden_units = hidden_units
+        self.activation = activation
+
+        self.main_network = EDMSNetworkDQN(observation_size=env.get_observation_size(),
                                            learning_rate=learning_rate,
                                            discount_factor=discount_factor,
-                                           hidden_units=[128, 128],
-                                           activation='relu')
+                                           hidden_units=hidden_units,
+                                           activation=activation)
 
         """ Experience memory setting """
         self.memory = BasicExperienceMemory(memory_size)
@@ -28,6 +33,8 @@ class EDMSAgentDQN(Agent):
         self.eps_init = eps_init
         self.eps_final = eps_final
         self.eps_decay = eps_decay
+
+        Agent.__init__(self, env, now)
 
     def selection(self, user, services):
         if np.random.random() < self.eps:
