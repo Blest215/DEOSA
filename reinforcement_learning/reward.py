@@ -2,15 +2,22 @@ import tensorflow as tf
 import json
 from abc import abstractmethod
 
-from models.effectiveness import Effectiveness
+from models.effectiveness import EffectivenessFunction
 from utils import variable_summaries
 
 
 class Reward:
     """ Reward: single reward signal """
-    @abstractmethod
+    def __init__(self, effectiveness, penalty, weight=None):
+        self.effectiveness = effectiveness
+        self.penalty = penalty
+        assert weight is None or 0 <= weight <= 1
+        self.weight = weight
+
     def get_overall_score(self):
-        pass
+        if self.weight:
+            return float(self.effectiveness * self.weight + self.penalty * (1-self.weight))
+        return float(self.effectiveness + self.penalty)
 
     def __add__(self, other):
         return float(self) + float(other)
@@ -51,34 +58,15 @@ class Reward:
         return self.get_overall_score() <= other
 
 
-class PenaltyReward(Reward):
-    """ PenaltyReward: single reward instance for combining penalty and effectiveness """
-    def __init__(self, penalty, effectiveness):
-        self.penalty = penalty
-        self.effectiveness = effectiveness
-
-    def get_overall_score(self):
-        return float(self.penalty + self.effectiveness)
-
-
 class RewardFunction:
-    """ RewardFunction: abstract class for reward signal models """
-    def __init__(self):
+    """ RewardFunction: giving penalty when handover, otherwise effectiveness """
+    def __init__(self, effectiveness_function, weight):
+        assert isinstance(effectiveness_function, EffectivenessFunction)
+        self.effectiveness_function = effectiveness_function
+        self.weight = weight
+
         self.__setting__ = self.__dict__.copy()
         self.__setting__["name"] = type(self).__name__
-
-    @abstractmethod
-    def measure(self, user, service, context=None):
-        pass
-
-
-class HandoverPenaltyRewardFunction(RewardFunction):
-    """ HandoverPenaltyRewardFunction: giving penalty when handover, otherwise effectiveness """
-    def __init__(self, effectiveness):
-        assert isinstance(effectiveness, Effectiveness)
-        self.effectiveness = effectiveness
-
-        super().__init__()
 
     def measure(self, user, service, context=None):
         """ Handover """
@@ -87,5 +75,7 @@ class HandoverPenaltyRewardFunction(RewardFunction):
         else:
             penalty = 0
 
-        return PenaltyReward(penalty=penalty, effectiveness=self.effectiveness.measure(user, service, context))
+        return Reward(effectiveness=self.effectiveness_function.measure(user, service, context),
+                      penalty=penalty,
+                      weight=self.weight)
 

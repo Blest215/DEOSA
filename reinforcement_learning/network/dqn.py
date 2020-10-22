@@ -3,7 +3,10 @@ import tensorflow as tf
 from reinforcement_learning.network.network import Network
 
 
-class EDMSNetworkDQN(Network):
+OBSERVATION_SIZE = 21
+
+
+class DEOSANetwork(Network):
     """
      EDSSNetworkDQN network for variable size of action space
 
@@ -13,12 +16,12 @@ class EDMSNetworkDQN(Network):
      Refer DRRN
      He, Ji, et al. "Deep reinforcement learning with an action space defined by natural language." (2016).
     """
-    def __init__(self, observation_size, learning_rate, discount_factor, hidden_units, activation):
-        super(EDMSNetworkDQN, self).__init__(name="EDMSNetworkDQN",
-                                             learning_rate=learning_rate,
-                                             discount_factor=discount_factor)
+    def __init__(self, learning_rate, discount_factor, hidden_units, activation):
+        super(DEOSANetwork, self).__init__(name="DEOSANetwork",
+                                           learning_rate=learning_rate,
+                                           discount_factor=discount_factor)
 
-        self.input_layer = tf.keras.layers.InputLayer(input_shape=(observation_size,))
+        self.input_layer = tf.keras.layers.InputLayer(input_shape=(OBSERVATION_SIZE,))
         self.hidden_layers = [
             tf.keras.layers.Dense(
                 unit, activation=activation
@@ -31,7 +34,7 @@ class EDMSNetworkDQN(Network):
         self.optimizer = tf.optimizers.Adam(learning_rate)
 
     @tf.function(input_signature=(  # input_signature is specified to avoid frequent retracing
-            tf.TensorSpec(shape=[None, 15], dtype=tf.float32),
+            tf.TensorSpec(shape=[None, OBSERVATION_SIZE], dtype=tf.float64),
     ))
     def call(self, observation, training=None, mask=None):
         z = self.input_layer(observation)
@@ -41,10 +44,10 @@ class EDMSNetworkDQN(Network):
         return output
 
     @tf.function(input_signature=(  # input_signature is specified to avoid frequent retracing
-            tf.TensorSpec(shape=[None, 15], dtype=tf.float32),
+            tf.TensorSpec(shape=[None, OBSERVATION_SIZE], dtype=tf.float64),
             tf.TensorSpec(shape=[], dtype=tf.int32),
-            tf.TensorSpec(shape=[], dtype=tf.float32),
-            tf.TensorSpec(shape=[None, 15], dtype=tf.float32),
+            tf.TensorSpec(shape=[], dtype=tf.float64),
+            tf.TensorSpec(shape=[None, OBSERVATION_SIZE], dtype=tf.float64),
             tf.TensorSpec(shape=[], dtype=tf.bool)
     ))
     def update(self, observation, action, reward, next_observation, done):
@@ -62,7 +65,7 @@ class EDMSNetworkDQN(Network):
             target_Q = tf.add(reward, tf.scalar_mul(self.discount_factor, tf.reduce_max(self.bootstrap(next_observation))))
 
         with tf.GradientTape() as tape:
-            action_one_hot = tf.one_hot(action, num_actions, dtype=tf.float32)
+            action_one_hot = tf.one_hot(action, num_actions, dtype=tf.float64)
             responsible_Q = tf.reduce_sum(tf.multiply(self.call(observation), action_one_hot))
             # responsible_Q = self(tf.expand_dims(observation[action], 0))
             loss = tf.square(target_Q - responsible_Q)

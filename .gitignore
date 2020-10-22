@@ -190,5 +190,4 @@ fabric.properties
 .idea/*
 summary/*
 legacy_summary/*
-tensorboard.bat
 plot/data/*

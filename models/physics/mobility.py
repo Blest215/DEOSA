@@ -39,7 +39,7 @@ class RectangularDirectedMobility(Mobility):
 
         if new_x == 0 or new_x == self.width or new_y == 0 or new_y == self.height or new_z == 0 or new_z == self.depth:
             """ if new direction is on the boundary of the area, reset direction randomly """
-            self.direction = generate_random_direction()
+            self.direction = Direction(None, None, None)
 
         coordinate.update(new_x, new_y, new_z)
 
@@ -49,25 +49,15 @@ class RectangularDirectedMobility(Mobility):
 
 
 def generate_random_direction_random_speed_mobility(width, height, depth, max_speed):
-    return RectangularDirectedMobility(width, height, depth,
-                                       generate_random_direction(),
-                                       random.random() * max_speed)
+    return RectangularDirectedMobility(width, height, depth, Direction(None, None, None), random.random() * max_speed)
 
 
 def generate_random_direction_specific_speed_mobility(width, height, depth, speed):
-    return RectangularDirectedMobility(width, height, depth,
-                                       generate_random_direction(),
-                                       speed)
+    return RectangularDirectedMobility(width, height, depth, Direction(None, None, None), speed)
 
 
 def generate_horizontal_direction_specific_speed_mobility(width, height, depth, speed):
-    return RectangularDirectedMobility(width, height, depth,
-                                       generate_horizontal_direction(),
-                                       speed)
-
-
-def generate_custom_mobility(width, height, depth, direction, speed):
-    return RectangularDirectedMobility(width=width, height=height, depth=depth, direction=direction, speed=speed)
+    return RectangularDirectedMobility(width, height, depth, Direction(None, None, 0), speed)
 
 
 class StaticMobility(Mobility):

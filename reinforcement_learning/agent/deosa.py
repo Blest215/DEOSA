@@ -4,10 +4,10 @@ import numpy as np
 
 from reinforcement_learning.agent.agent import Agent
 from reinforcement_learning.experience_memory import BasicExperienceMemory
-from reinforcement_learning.network.dqn import EDMSNetworkDQN
+from reinforcement_learning.network.dqn import DEOSANetwork
 
 
-class EDMSAgentDQN(Agent):
+class DEOSA(Agent):
     def __init__(self, env, now,
                  memory_size, batch_size, learning_rate, discount_factor,
                  hidden_units, activation,
@@ -18,11 +18,8 @@ class EDMSAgentDQN(Agent):
         self.hidden_units = hidden_units
         self.activation = activation
 
-        self.main_network = EDMSNetworkDQN(observation_size=env.get_observation_size(),
-                                           learning_rate=learning_rate,
-                                           discount_factor=discount_factor,
-                                           hidden_units=hidden_units,
-                                           activation=activation)
+        self.main_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor,
+                                         hidden_units=hidden_units, activation=activation)
 
         """ Experience memory setting """
         self.memory = BasicExperienceMemory(memory_size)
@@ -41,7 +38,7 @@ class EDMSAgentDQN(Agent):
             """ epsilon-greedy """
             selection = random.choice(range(len(services)))
         else:
-            observation = self.normalize_observations(self.convert_observations(user, services))
+            observation = self.convert_observations(user, services)
             """ calculate Q-value for each service (action) """
             Q_set = self.main_network(observation)
             selection = np.argmax(Q_set)
@@ -85,15 +82,11 @@ class EDMSAgentDQN(Agent):
                 # tf.saved_model.save(self.main_network, get_summary_path(self.name, self.datetime, "train"))
 
     @staticmethod
-    def normalize_observations(observations):
-        """ normalize_observations: normalizes the observation values by taking logarithm after adding 1 """
-        return np.log(np.add(observations, 1))
-
-    @staticmethod
     def convert_observations(user, services):
         """ convert_observations: converts user and services information into matrix for the TensorFlow network """
         num_service = len(services)
         user_tile = np.tile(user.vectorize(), (num_service, 1))
         service_tile = np.array([service.vectorize() for service in services])
-        observation = np.concatenate((user_tile, service_tile), axis=1)
-        return observation
+        observations = np.concatenate((user_tile, service_tile), axis=1)
+        observations = np.log(np.add(observations, 1))  # TODO normalization
+        return observations

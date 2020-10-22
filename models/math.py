@@ -46,6 +46,11 @@ class Vector:
         assert isinstance(other, Vector)
         return self.dot(other) / other.size()
 
+    def get_distance(self, other):
+        """ get_distance: get distance between to vectors """
+        assert isinstance(other, Vector)
+        return (self - other).size()
+
     def get_cosine_angle(self, other):
         """ get_cosine_angle: calculates cosine value between the vector and target vector """
         assert isinstance(other, Vector)

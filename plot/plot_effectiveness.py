@@ -13,7 +13,7 @@ from models.physics.mobility import generate_custom_mobility, \
     StaticMobility
 from models.physics.direction import Direction
 from models.physics.coordinate import Coordinate
-from models.effectiveness import VisualEffectiveness
+from models.effectiveness import VisualEffectivenessFunction
 
 
 class Arrow3D(FancyArrowPatch):
@@ -36,11 +36,11 @@ height = 10
 depth = 2
 delta = 1
 
-effectiveness = VisualEffectiveness(text_size_pixel=12,
-                                    resolution=1080,
-                                    visual_angle_min=5/60,
-                                    FoV_angle_max=105,
-                                    face_angle_max=60)
+effectiveness = VisualEffectivenessFunction(text_size_pixel=12,
+                                            resolution=1080,
+                                            visual_angle_min=5/60,
+                                            FoV_angle_max=105,
+                                            face_angle_max=60)
 
 device = DisplayDevice(name=0,
                        device_type="visual",

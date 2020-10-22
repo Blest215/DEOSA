@@ -1,0 +1,1 @@
+cd venv/Scripts/ & activate & tensorboard --logdir ../../summary

@@ -8,16 +8,22 @@ class Observation:
     @abstractmethod
     def get_observation(self, env):
         """ get_observation: return the observation according to the state of the environment """
-        pass
+        return {
+            "user": None,
+            "services": []
+        }
 
-    @abstractmethod
     def get_observation_vector(self, env):
         """ get_observation_vector: return the observation in vector format """
-        pass
+        observation = self.get_observation(env)
+        return {
+            "user": observation["user"].vectorize(),
+            "services": [service.vectorize() for service in observation["services"]]
+        }
 
     @abstractmethod
     def __str__(self):
-        pass
+        return ""
 
 
 class EuclideanObservation(Observation):
@@ -35,14 +41,6 @@ class EuclideanObservation(Observation):
             "services": service_observation
         }
 
-    def get_observation_vector(self, env):
-        """ get_observation_vector: returns the Euclidean-distance-based partial observation on the environment """
-        observation = self.get_observation(env)
-        return {
-            "user": observation["user"].vectorize(),
-            "services": [service.vectorize() for service in observation["services"]]
-        }
-
     def __str__(self):
         return "EuclideanObservation({range})".format(range=self.observation_range)
 
@@ -53,14 +51,6 @@ class FullObservation(Observation):
         return {
             "user": env.user,
             "services": env.services
-        }
-
-    def get_observation_vector(self, env):
-        """ get_observation_vector: returns the Full observation """
-        observation = self.get_observation(env)
-        return {
-            "user": observation["user"].vectorize(),
-            "services": [service.vectorize() for service in observation["services"]]
         }
 
     def __str__(self):

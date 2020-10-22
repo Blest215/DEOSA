@@ -1,14 +1,18 @@
 import matplotlib.pyplot as plt
 
-from models.entity.service import Service
+from models.entity.service import Service, VisualOutputService
+from models.entity.user import User
 from models.environment.observation import Observation
+from models.physics.coordinate import Coordinate, generate_random_coordinate
+from models.physics.direction import Direction
+from models.physics.mobility import RectangularDirectedMobility
 from reinforcement_learning.reward import RewardFunction
 
 
 class Environment:
     """ Environment: abstract class of IoT environments for required methods """
-    def __init__(self, num_user, num_service, width, height, depth, observation,
-                 user_constructor, service_constructor, reward_function):
+
+    def __init__(self, num_user, num_service, width, height, depth, max_speed, observation, reward_function):
         """ __init__: initialize the environment by setting configurations and resetting """
 
         """ num_user: number of users """
@@ -26,14 +30,13 @@ class Environment:
         """ depth: z-axis size of the environment """
         assert depth > 0
         self.depth = depth
+        """ max_speed: maximum speed that the entities can have """
+        assert max_speed > 0
+        self.max_speed = max_speed
         """ observation: observation model """
         assert isinstance(observation, Observation)
         self.observation = observation
 
-        """ user_constructor: constructor function for users """
-        self.user_constructor = user_constructor
-        """ service_constructor: constructor function for services """
-        self.service_constructor = service_constructor
         """ reward: reward model """
         assert isinstance(reward_function, RewardFunction)
         self.reward_function = reward_function
@@ -49,13 +52,6 @@ class Environment:
 
         self.reset()
 
-    def update_state(self):
-        """ update_state: updates the state of environment, for each step """
-        for user in self.users:
-            user.update()
-        for service in self.services:
-            service.update()
-
     def reset(self):
         """ reset: resets the environment """
         self.user = None
@@ -64,13 +60,31 @@ class Environment:
 
         """ set users """
         for i in range(self.num_user):
-            self.users.append(self.user_constructor.get(i))
+            direction = Direction(1, 0, 0)
+            self.users.append(
+                User(uid=i,
+                     # Start from edge of the environment
+                     coordinate=Coordinate(x=10, y=self.height / 2, z=1.7),
+                     # Orientation is same with mobility direction
+                     orientation=direction,
+                     # Go across the environment
+                     mobility=RectangularDirectedMobility(self.width, self.height, self.depth,
+                                                          direction, self.max_speed),
+                     visual_acuity=0.0)
+            )
         """ the first user becomes primary (main) user """
         self.user = self.users[0]
 
         """ set devices and services in the environment """
         for i in range(self.num_service):
-            self.services.append(self.service_constructor.get(i))
+            self.services.append(
+                VisualOutputService(
+                    sid=i,
+                    location=generate_random_coordinate(self.width, self.height, self.depth),
+                    orientation=Direction(None, None, 0),
+                    text_size=24  # TODO constant
+                )
+            )
 
         # if not self.get_observation()["services"]:
         #     """ reset until at least one service discovered """
@@ -106,12 +120,13 @@ class Environment:
         reward = self.reward_function.measure(self.user, action)
 
         """ Release service and acquire new """
-        if self.user.service:
-            self.user.service.release()
         self.user.utilize(action)
-        action.acquire(self.user)
 
-        self.update_state()
+        for user in self.users:
+            user.update()
+        for service in self.services:
+            service.update()
+
         if not self.get_observation()["services"]:
             """ if no service is discovered, done is True """
             done = True
