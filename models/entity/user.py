@@ -19,6 +19,9 @@ class User(PhysicalEntity):
                                                                                  face=self.orientation(),
                                                                                  acuity=self.visual_acuity)
 
+    def vectorize(self):
+        return self.location.vectorize() + self.mobility.vectorize()
+
     def utilize(self, service):
         if self.service:
             self.service.release()

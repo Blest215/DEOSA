@@ -11,7 +11,8 @@ class Coordinate(Vector):
     def vectorize(self, width=200, height=10, depth=3):
         """ vectorize: returns a list form of the coordinate """
         # TODO normalization
-        return [self.x/width, self.y/height, self.z/depth]
+        return [self.x, self.y, self.z]
+        # return [self.x/width, self.y/height, self.z/depth]
 
 
 def generate_random_coordinate(width, height, depth):

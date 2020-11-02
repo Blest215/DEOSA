@@ -3,7 +3,7 @@ import tensorflow as tf
 from reinforcement_learning.network.network import Network
 
 
-OBSERVATION_SIZE = 21
+OBSERVATION_SIZE = 17
 
 
 class DEOSANetwork(Network):
@@ -40,7 +40,7 @@ class DEOSANetwork(Network):
         z = self.input_layer(observation)
         for layer in self.hidden_layers:
             z = layer(z)
-        output = self.output_layer(z)
+        output = tf.reshape(self.output_layer(z), [-1])
         return output
 
     @tf.function(input_signature=(  # input_signature is specified to avoid frequent retracing

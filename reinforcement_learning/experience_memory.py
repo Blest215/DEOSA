@@ -31,9 +31,6 @@ class ExperienceMemory:
 
 # Basic experience memory that randomly sampling experiences for DQN
 class BasicExperienceMemory(ExperienceMemory):
-    def __init__(self, size):
-        super().__init__(size)
-
     def add(self, observation, action, reward, next_observation, done):
         while self.is_full():
             # Random pop-up

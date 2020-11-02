@@ -9,15 +9,15 @@ from utils import variable_summaries
 class Reward:
     """ Reward: single reward signal """
     def __init__(self, effectiveness, penalty, weight=None):
-        self.effectiveness = effectiveness
-        self.penalty = penalty
+        self.effectiveness = float(effectiveness)
+        self.penalty = float(penalty)
         assert weight is None or 0 <= weight <= 1
         self.weight = weight
 
     def get_overall_score(self):
         if self.weight:
             return float(self.effectiveness * self.weight + self.penalty * (1-self.weight))
-        return float(self.effectiveness + self.penalty)
+        return float(self.effectiveness - self.penalty)
 
     def __add__(self, other):
         return float(self) + float(other)
@@ -60,9 +60,10 @@ class Reward:
 
 class RewardFunction:
     """ RewardFunction: giving penalty when handover, otherwise effectiveness """
-    def __init__(self, effectiveness_function, weight):
+    def __init__(self, effectiveness_function, penalty, weight):
         assert isinstance(effectiveness_function, EffectivenessFunction)
         self.effectiveness_function = effectiveness_function
+        self.penalty = penalty
         self.weight = weight
 
         self.__setting__ = self.__dict__.copy()
@@ -71,7 +72,7 @@ class RewardFunction:
     def measure(self, user, service, context=None):
         """ Handover """
         if not (service.in_use and service.user == user) and user.service:
-            penalty = -1
+            penalty = self.penalty
         else:
             penalty = 0
 

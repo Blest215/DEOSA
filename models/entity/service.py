@@ -36,7 +36,7 @@ class Service(Entity):
 
 class VisualOutputService(Service):
 
-    def __init__(self, sid, location, orientation, text_size):
+    def __init__(self, sid, location, orientation, text_size, scaling_constant):
         super().__init__(sid)
 
         # Device-related
@@ -45,13 +45,14 @@ class VisualOutputService(Service):
 
         # Content-related
         self.text_size = text_size
+        self.scaling_constant = scaling_constant
 
     def update(self):
         self.device.update()
 
     def vectorize(self):
         # TODO vector representation of services: multi-user situation
-        return super().vectorize() + self.device.vectorize()
+        return self.device.vectorize() + [self.scaling_constant] + super().vectorize()
 
     def __str__(self):
         return "Visual Output Service ({id}) at {location}, {orientation}. Text Size ({size})".format(id=self.id,

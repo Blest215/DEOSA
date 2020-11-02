@@ -45,5 +45,3 @@ class PhysicalEntity(Entity):
 
     def vectorize(self):
         return self.location.vectorize() + self.orientation.vectorize() + self.mobility.vectorize()
-
-

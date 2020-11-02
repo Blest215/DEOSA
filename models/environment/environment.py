@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import random
 
 from models.entity.service import Service, VisualOutputService
 from models.entity.user import User
@@ -41,6 +42,12 @@ class Environment:
         assert isinstance(reward_function, RewardFunction)
         self.reward_function = reward_function
 
+        self.user_height = 1.7
+        self.user_visual_acuity = 0.0
+        self.service_text_size = 24
+        self.service_scaling_constant_min = 1.0
+        self.service_scaling_constant_max = 3.0
+
         self.__setting__ = self.__dict__.copy()
 
         """ user: main user that utilizes services """
@@ -64,13 +71,13 @@ class Environment:
             self.users.append(
                 User(uid=i,
                      # Start from edge of the environment
-                     coordinate=Coordinate(x=10, y=self.height / 2, z=1.7),
+                     coordinate=Coordinate(x=0, y=self.height / 2, z=self.user_height),
                      # Orientation is same with mobility direction
                      orientation=direction,
                      # Go across the environment
                      mobility=RectangularDirectedMobility(self.width, self.height, self.depth,
                                                           direction, self.max_speed),
-                     visual_acuity=0.0)
+                     visual_acuity=self.user_visual_acuity)
             )
         """ the first user becomes primary (main) user """
         self.user = self.users[0]
@@ -82,13 +89,14 @@ class Environment:
                     sid=i,
                     location=generate_random_coordinate(self.width, self.height, self.depth),
                     orientation=Direction(None, None, 0),
-                    text_size=24  # TODO constant
+                    text_size=self.service_text_size,
+                    scaling_constant=random.randint(self.service_scaling_constant_min, self.service_scaling_constant_max)
                 )
             )
 
-        # if not self.get_observation()["services"]:
-        #     """ reset until at least one service discovered """
-        #     return self.reset()
+        if not self.get_observation()["services"]:
+            """ reset until at least one service discovered """
+            return self.reset()
 
         return self.get_observation()
 
@@ -102,12 +110,6 @@ class Environment:
     def get_observation(self):
         """ return observation in both dictionary format """
         return self.observation.get_observation(self)
-
-    def get_observation_size(self):
-        return len(self.user.vectorize())
-
-    def get_action_size(self):
-        return len(self.services[0].vectorize())
 
     def step(self, action):
         """ step: make environment one step further by perform selection and update states """
@@ -127,11 +129,12 @@ class Environment:
         for service in self.services:
             service.update()
 
-        if not self.get_observation()["services"]:
+        new_observation = self.get_observation()
+        if not new_observation["services"]:
             """ if no service is discovered, done is True """
             done = True
 
-        return self.get_observation(), reward, done
+        return new_observation, reward, done
 
     def render(self):  # TODO
         fig = plt.figure()

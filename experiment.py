@@ -3,6 +3,7 @@ import json
 import os
 import errno
 
+from reinforcement_learning.agent.agent import Agent
 from utils import get_summary_path
 
 
@@ -10,12 +11,12 @@ class Experiment:
     """
         Experiment: The experiment class for the evaluation of dynamic and effect-driven selection of output-services
     """
-    def __init__(self, env, agent, now, num_episode, num_step):
+    def __init__(self, env, now, num_episode, num_step):
         """ __init__: simply add all the given parameters as its attributes """
 
         self.env = env
 
-        self.agent = agent
+        self.agent = None
 
         # Iteration settings
         self.num_episode = num_episode
@@ -27,14 +28,20 @@ class Experiment:
     def reset(self):
         self.env.reset()
 
-    def run(self):
+    def run(self, agent, train=False):
+        assert isinstance(agent, Agent)
+        self.agent = agent
         self.save()
 
-        self.env.reset()
-        with tf.device('GPU:1'):
+        self.reset()
+        # with tf.device('GPU:1'):
+        if train:
             self.agent.run(num_episode=self.num_episode,
                            num_step=self.num_step,
-                           mode="train")
+                           train=True)
+        self.agent.run(num_episode=self.num_episode,
+                       num_step=self.num_step,
+                       train=False)
 
     def save(self):
         """

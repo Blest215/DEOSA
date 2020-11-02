@@ -13,17 +13,11 @@ class Agent:
 
         self.__setting__ = self.__dict__.copy()
 
-        assert isinstance(env, Environment)
-        self.env = env
-
-        """ whether performing training or not """
         self.train = False
 
-        """ summary writers of TensorFlow """
-        self.train_summary_writer = tf.summary.create_file_writer(
-            get_summary_path(self.name, now, "train"))
-        self.test_summary_writer = tf.summary.create_file_writer(
-            get_summary_path(self.name, now, "test"))
+        assert isinstance(env, Environment)
+        self.env = env
+        self.now = now
 
     @abstractmethod
     def selection(self, user, services):
@@ -37,23 +31,19 @@ class Agent:
     def learn(self, observation, action_index, reward, next_observation, done):
         pass
 
-    def run(self, num_episode, num_step, mode="test"):
+    def run(self, num_episode, num_step, train=False):
         """ run: run train or test simulations according to the given mode """
 
-        """ set training or testing mode according to command """
-        assert mode == "train" or mode == "test"
-        if mode == "train":
-            self.train = True
-            writer = self.train_summary_writer
-        else:
-            self.train = False
-            writer = self.test_summary_writer
-        print("{mode} phase".format(mode=mode))
+        """ summary writer of TensorFlow """
+        writer = tf.summary.create_file_writer(get_summary_path(self.name, self.now, "train" if train else "test"))
+        print("Train phase" if train else "Test phase")
+        self.train = train
 
         tf.summary.trace_on()
         with writer.as_default():
             for i_episode in range(num_episode):
                 print("Episode %d" % i_episode)
+                episode_start = time.time()
                 tf.summary.experimental.set_step(i_episode)
                 # random.seed(i_episode)
 
@@ -75,9 +65,9 @@ class Agent:
                     """ perform the selected action on the environment """
                     next_observation, reward, done = self.env.step(action)
                     """ add reward to total score """
-                    reward_list.append(reward.get_overall_score())
+                    reward_list.append(reward)
 
-                    if self.train:
+                    if train:
                         """ perform learning process if the mode is train """
                         loss = self.learn(observation, action_index, reward, next_observation, done)
                         if loss:
@@ -93,10 +83,15 @@ class Agent:
 
                 """ summaries """
                 variable_summaries('execution_time', execution_time_list, step=i_episode)
-                variable_summaries('reward', reward_list, step=i_episode)
-                print("Episode {i} ends with average reward {reward}".format(i=i_episode,
-                                                                             reward=np.mean(reward_list)))
-                if self.train and loss_list:
+                variable_summaries('reward', [float(reward) for reward in reward_list], step=i_episode)
+                variable_summaries('effectiveness', [reward.effectiveness for reward in reward_list], step=i_episode)
+                variable_summaries('penalty', [reward.penalty for reward in reward_list], step=i_episode)
+                print("Episode {i} ends with average reward {reward} ({time:.3f} seconds)".format(
+                    i=i_episode,
+                    reward=np.mean(reward_list),
+                    time=time.time() - episode_start)
+                )
+                if train and loss_list:
                     variable_summaries('loss', loss_list, step=i_episode)
                     print("Average loss was: {loss}".format(loss=np.mean(loss_list)))
 

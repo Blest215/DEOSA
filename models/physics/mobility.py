@@ -20,8 +20,9 @@ class Mobility:
 
     def vectorize(self):
         """ vectorize: returns list form of the mobility, for concatenation with other lists """
-        # return (self.speed * self.direction).vectorize() TODO assume static speed
-        return self.direction.vectorize() + [self.speed]
+        # TODO assume static speed
+        return (self.speed * self.direction).vectorize()
+        # return self.direction.vectorize() + [self.speed]
 
 
 class RectangularDirectedMobility(Mobility):
@@ -46,18 +47,6 @@ class RectangularDirectedMobility(Mobility):
     def __str__(self):
         return "DirectedMobility(direction: {direction}, speed: {speed})".format(direction=self.direction,
                                                                                  speed=self.speed)
-
-
-def generate_random_direction_random_speed_mobility(width, height, depth, max_speed):
-    return RectangularDirectedMobility(width, height, depth, Direction(None, None, None), random.random() * max_speed)
-
-
-def generate_random_direction_specific_speed_mobility(width, height, depth, speed):
-    return RectangularDirectedMobility(width, height, depth, Direction(None, None, None), speed)
-
-
-def generate_horizontal_direction_specific_speed_mobility(width, height, depth, speed):
-    return RectangularDirectedMobility(width, height, depth, Direction(None, None, 0), speed)
 
 
 class StaticMobility(Mobility):

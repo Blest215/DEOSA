@@ -17,7 +17,6 @@ class VisualEffectivenessFunction(EffectivenessFunction):
     def __init__(self, visual_field_max, viewing_angle_max):
         self.visual_field_max = visual_field_max
         self.viewing_angle_max = viewing_angle_max
-        self.device_scaling_constant = 1
         self.text_scaling_constant = 5
 
         self.__setting__ = self.__dict__.copy()
@@ -51,7 +50,7 @@ class VisualEffectivenessFunction(EffectivenessFunction):
             6/6 vision is defined as: at 6 m distance, human can recognize 5 arc-min letter.
             so size of the minimum letter is: 2 * 6 * tan(5 / 120) = 0.00873 m  
         """
-        text_size = service.text_size * self.device_scaling_constant
+        text_size = service.text_size * service.scaling_constant * 0.000352778
         perceived_size = text_size * device_orientation.get_cosine_angle(-relative_location)  # cos(psi)
         visual_angle = np.degrees(2 * np.arctan(perceived_size / (2 * user.get_distance(service.device))))
         """
