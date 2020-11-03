@@ -1,7 +1,6 @@
 import tensorflow as tf
 import json
 import os
-import errno
 
 from reinforcement_learning.agent.agent import Agent
 from utils import get_summary_path
@@ -59,12 +58,6 @@ class Experiment:
                         return str(obj)
 
         file_path = get_summary_path(agent=self.agent.name, datetime=self.now, filename="configuration.txt")
-        if not os.path.exists(os.path.dirname(file_path)):
-            try:
-                os.makedirs(os.path.dirname(file_path))
-            except OSError as e:
-                if e.errno != errno.EEXIST:
-                    raise
         with open(file_path, 'w') as f:
             f.write(json.dumps(self.__dict__, indent=4, cls=CustomJSONEncoder))
             f.close()

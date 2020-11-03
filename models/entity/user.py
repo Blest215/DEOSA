@@ -11,6 +11,7 @@ class User(PhysicalEntity):
         PhysicalEntity.__init__(self, coordinate, orientation, mobility)
         self.id = uid
         self.visual_acuity = visual_acuity
+        self.minimum_visual_angle = pow(10, self.visual_acuity) / 60
         self.service = None
 
     def __str__(self):

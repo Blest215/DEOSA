@@ -1,6 +1,7 @@
 import tensorflow as tf
 import json
 import os
+import errno
 
 """ format of path that collects summary for each experiment """
 SUMMARY_PATH = os.path.join(os.path.dirname(__file__), "summary")
@@ -23,4 +24,11 @@ def variable_summaries(variable_name, values, step):
 
 def get_summary_path(agent, datetime, filename):
     """ get_summary_path: returns a file path for collecting summary for each experiment """
-    return os.path.join(SUMMARY_PATH, agent, datetime, filename)
+    file_path = os.path.join(SUMMARY_PATH, agent, datetime, filename)
+    if not os.path.exists(os.path.dirname(file_path)):
+        try:
+            os.makedirs(os.path.dirname(file_path))
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+    return file_path

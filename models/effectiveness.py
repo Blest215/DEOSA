@@ -57,7 +57,7 @@ class VisualEffectivenessFunction(EffectivenessFunction):
             "the size of a letter on the Snellen chart of Landolt C chart is a visual angle of 5 arc minutes"
             https://en.wikipedia.org/wiki/Visual_acuity 
         """
-        if visual_angle / self.text_scaling_constant < pow(10, user.visual_acuity) / 60:
+        if visual_angle / self.text_scaling_constant < user.minimum_visual_angle:
             return 0
 
         return 1
