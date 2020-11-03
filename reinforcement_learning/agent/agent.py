@@ -39,9 +39,9 @@ class Agent:
         print("Train phase" if train else "Test phase")
         self.train = train
 
-        tf.summary.trace_on()
-        with writer.as_default():
-            for i_episode in range(num_episode):
+        for i_episode in range(num_episode):
+            tf.summary.trace_on()
+            with writer.as_default():
                 print("Episode %d" % i_episode)
                 episode_start = time.time()
                 tf.summary.experimental.set_step(i_episode)
@@ -95,4 +95,4 @@ class Agent:
                     variable_summaries('loss', loss_list, step=i_episode)
                     print("Average loss was: {loss}".format(loss=np.mean(loss_list)))
 
-            tf.summary.trace_export(name="EDMS agent (DQN version) experiment")
+                tf.summary.trace_export(name="EDMS agent (DQN version) experiment")

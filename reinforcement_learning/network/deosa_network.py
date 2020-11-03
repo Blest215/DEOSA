@@ -21,13 +21,16 @@ class DEOSANetwork(Network):
                                            learning_rate=learning_rate,
                                            discount_factor=discount_factor)
 
-        self.input_layer = tf.keras.layers.InputLayer(input_shape=(OBSERVATION_SIZE,))
-        self.hidden_layers = [
-            tf.keras.layers.Dense(
-                unit, activation=activation
-            ) for unit in hidden_units
-        ]
-        self.output_layer = tf.keras.layers.Dense(1, activation=activation)
+        self.input_layer = tf.keras.layers.InputLayer(input_shape=(OBSERVATION_SIZE,), name="Input layer")
+
+        with tf.name_scope("Hidden layers"):
+            self.hidden_layers = [
+                tf.keras.layers.Dense(
+                    unit, activation=activation
+                ) for unit in hidden_units
+            ]
+        # self.lstm_layer = tf.keras.layers.GRU(1024, activation=activation)
+        self.output_layer = tf.keras.layers.Dense(1, activation=activation, name="Output layer")
 
         # self._set_inputs(inputs=self.input_layer)  # for saving model without compile or predict
 
@@ -40,7 +43,7 @@ class DEOSANetwork(Network):
         z = self.input_layer(observation)
         for layer in self.hidden_layers:
             z = layer(z)
-        output = tf.reshape(self.output_layer(z), [-1])
+        output = tf.reshape(self.output_layer(z), [-1], name="Output")
         return output
 
     @tf.function(input_signature=(  # input_signature is specified to avoid frequent retracing
@@ -62,13 +65,16 @@ class DEOSANetwork(Network):
             target_Q = reward
         else:
             """ else, bootstrapping next Q value """
-            target_Q = tf.add(reward, tf.scalar_mul(self.discount_factor, tf.reduce_max(self.bootstrap(next_observation))))
+            target_Q = tf.add(reward,
+                              tf.scalar_mul(self.discount_factor, tf.reduce_max(self.bootstrap(next_observation))),
+                              name="Target Q")
 
         with tf.GradientTape() as tape:
-            action_one_hot = tf.one_hot(action, num_actions, dtype=tf.float64)
-            responsible_Q = tf.reduce_sum(tf.multiply(self.call(observation), action_one_hot))
+            action_one_hot = tf.one_hot(action, num_actions, dtype=tf.float64, name="Action (one hot)")
+            responsible_Q = tf.reduce_sum(tf.multiply(self.call(observation), action_one_hot),
+                                          name="Responsible Q")
             # responsible_Q = self(tf.expand_dims(observation[action], 0))
-            loss = tf.square(target_Q - responsible_Q)
+            loss = tf.square(target_Q - responsible_Q, name="Loss")
 
         variables = self.trainable_variables
         gradients = tape.gradient(loss, variables)
