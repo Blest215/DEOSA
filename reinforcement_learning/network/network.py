@@ -18,7 +18,7 @@ class Network(tf.keras.Model):
 
     def update_target_network(self, tau):
         """ update_target_network: updates target network within given tau """
-        assert self.target_network and len(self.variables) == len(self.target_variables)
+        assert self.target_network
 
         variables = self.trainable_variables
         target_variables = self.target_network.trainable_variables
@@ -27,17 +27,26 @@ class Network(tf.keras.Model):
 
     def copy_from_target_network(self):
         """ copy_from_target_network: copies parameters from the target network """
-        assert self.target_network and len(self.variables) == len(self.target_variables)
+        assert self.target_network
 
         variables = self.trainable_variables
         target_variables = self.target_network.trainable_variables
         for v1, v2 in zip(variables, target_variables):
             v1.assign(v2.numpy())
 
+    def copy_to_target_network(self):
+        """ copy_to_target_network: copies parameters to the target network """
+        assert self.target_network
+
+        variables = self.trainable_variables
+        target_variables = self.target_network.trainable_variables
+        for v1, v2 in zip(variables, target_variables):
+            v2.assign(v1.numpy())
+
     def bootstrap(self, next_observation):
         """ bootstrap: bootstraps Q value of given next_observation and next_actions"""
         if self.target_network:
-            """ [DDQN] if target network exist, bootstrapping from target network """
+            """ if target network exist, bootstrapping from target network """
             return self.target_network(next_observation)
         return self(next_observation)
 

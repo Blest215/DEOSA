@@ -12,7 +12,7 @@ from utils import get_summary_path
 
 class DEOSA(Agent):
     def __init__(self, env, now,
-                 memory_size, batch_size, learning_rate, discount_factor,
+                 memory_size, batch_size, learning_rate, discount_factor, tau,
                  hidden_units, activation,
                  eps_init, eps_final, eps_decay):
 
@@ -20,15 +20,20 @@ class DEOSA(Agent):
         self.discount_factor = discount_factor
         self.hidden_units = hidden_units
         self.activation = activation
+        self.tau = tau
 
+        """ Network settings """
         self.main_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor,
                                          hidden_units=hidden_units, activation=activation)
+        self.target_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor,
+                                           hidden_units=hidden_units, activation=activation)
+        self.main_network.set_target_network(self.target_network)
 
-        """ Experience memory setting """
+        """ Experience memory settings """
         self.memory = BasicExperienceMemory(memory_size)
         self.batch_size = batch_size
 
-        """ Epsilon greedy setting """
+        """ Epsilon greedy settings """
         self.eps = eps_init
         self.eps_init = eps_init
         self.eps_final = eps_final
@@ -84,8 +89,14 @@ class DEOSA(Agent):
                                                       done=[memory["done"] for memory in batch]))
             return np.mean(loss_list)
 
+    def pre_episode_process(self, *kwargs):
+        """ pre_episode_process """
+
+        """ copy target network """
+        # self.main_network.copy_from_target_network()
+
     def post_episode_process(self, i_episode):
-        """ post_episode_process: overriding post_episode_process method """
+        """ post_episode_process """
 
         """ epsilon decaying for each episode """
         if self.eps > self.eps_final:

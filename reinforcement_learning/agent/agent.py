@@ -24,6 +24,10 @@ class Agent:
         """ return selected service object and its index """
         return None, 0
 
+    def pre_episode_process(self, *kwargs):
+        """ pre_episode_process: a function called before each episode """
+        pass
+
     def post_episode_process(self, *kwargs):
         """ post_episode_process: a function called after each episode """
         pass
@@ -43,6 +47,7 @@ class Agent:
             tf.summary.trace_on()
             with writer.as_default():
                 print("Episode %d" % i_episode)
+                self.pre_episode_process(i_episode)
                 episode_start = time.time()
                 tf.summary.experimental.set_step(i_episode)
                 # random.seed(i_episode)
