@@ -7,6 +7,7 @@ import inspect
 from reinforcement_learning.agent.agent import Agent
 from reinforcement_learning.experience_memory import BasicExperienceMemory
 from reinforcement_learning.network.deosa_network import DEOSANetwork
+from utils import get_summary_path
 
 
 class DEOSA(Agent):
@@ -38,14 +39,22 @@ class DEOSA(Agent):
 
         Agent.__init__(self, env, now)
 
+        with open(get_summary_path(agent=self.name, datetime=self.now, filename="model.txt"), 'w') as f:
+            self.main_network.summary(print_fn=lambda x: f.write(x + '\n'))
+
     def selection(self, user, services):
         if self.train and np.random.random() < self.eps:
             """ epsilon-greedy """
             selection = np.random.choice(range(len(services)))
+            """ softmax """
+            # observation = self.convert_observations(user, services)
+            # Q_set = self.main_network(observation)
+            # exp = np.exp(Q_set)
+            # p = np.divide(exp, np.sum(exp))
+            # selection = np.random.choice(range(len(services)), p=p)
         else:
             """ calculate Q-value for each service (action) """
-            observation = self.convert_observations(user, services)
-            Q_set = self.main_network(observation)
+            Q_set = self.main_network(self.convert_observations(user, services))
             # when effectiveness is available
             # effectiveness = [self.env.reward_function.measure(user, service) for service in services]
             # max_effectiveness = max(effectiveness)
@@ -60,7 +69,7 @@ class DEOSA(Agent):
         self.memory.add(observation=self.convert_observations(observation["user"], observation["services"]),
                         action=action_index,
                         reward=reward,
-                        next_observation=self.convert_observations(next_observation["user"], observation["services"]),
+                        next_observation=self.convert_observations(next_observation["user"], next_observation["services"]),
                         done=done)
         loss_list = []
 
@@ -96,17 +105,19 @@ class DEOSA(Agent):
         user_tile = np.tile(user.vectorize(), (num_service, 1))
         service_tile = np.array(
             [service.vectorize() for service in services]
-            # [service.vectorize() + [float(self.env.reward_function.measure(user, service))] for service in services]
+            # [service.vectorize() + [float(self.env.reward_function.reduced_measure(user, service))] for service in services]
+            # [service.vectorize(user) for service in services]
         )
         # observations = np.subtract(service_tile, user_tile)
         observations = np.concatenate((user_tile, service_tile), axis=1)
+        # observations = service_tile
 
         # Normalization
         # observations = np.log(np.add(observations, np.e))
         # observations = np.subtract(np.log(np.add(observations, np.e)), 1)
-        observations = np.subtract(np.log10(np.add(observations, 10)), 1)
+        # observations = np.subtract(np.log10(np.add(observations, 10)), 1)
         # observations = np.divide(1, np.add(1, np.exp(-observations)))
-        # observations = np.tanh(observations)
+        # observations = np.tanh(np.divide(observations, 10))
         # zero_pad = np.concatenate((user_tile, np.zeros((num_service, 2))), axis=1)
         # observations = np.tanh(np.subtract(service_tile, zero_pad))
         return observations

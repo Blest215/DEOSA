@@ -16,25 +16,29 @@ class DEOSANetwork(Network):
      Refer DRRN
      He, Ji, et al. "Deep reinforcement learning with an action space defined by natural language." (2016).
     """
+
     def __init__(self, learning_rate, discount_factor, hidden_units, activation):
         super(DEOSANetwork, self).__init__(name="DEOSANetwork",
                                            learning_rate=learning_rate,
                                            discount_factor=discount_factor)
 
-        self.input_layer = tf.keras.layers.InputLayer(input_shape=(OBSERVATION_SIZE,), name="Input layer")
+        self.input_layer = tf.keras.layers.InputLayer(input_shape=(OBSERVATION_SIZE,), name="InputLayer")
 
-        with tf.name_scope("Hidden layers"):
+        with tf.name_scope("HiddenLayers"):
             self.hidden_layers = [
                 tf.keras.layers.Dense(
                     unit, activation=activation
                 ) for unit in hidden_units
             ]
         # self.lstm_layer = tf.keras.layers.GRU(1024, activation=activation)
-        self.output_layer = tf.keras.layers.Dense(1, activation=activation, name="Output layer")
+        self.output_layer = tf.keras.layers.Dense(1, activation=None, name="OutputLayer")
 
         # self._set_inputs(inputs=self.input_layer)  # for saving model without compile or predict
 
         self.optimizer = tf.optimizers.Adam(learning_rate)
+
+        # self.lstm_layer.build((None, OBSERVATION_SIZE))
+        self.build((None, OBSERVATION_SIZE))
 
     @tf.function(input_signature=(  # input_signature is specified to avoid frequent retracing
             tf.TensorSpec(shape=[None, OBSERVATION_SIZE], dtype=tf.float64),
@@ -67,12 +71,12 @@ class DEOSANetwork(Network):
             """ else, bootstrapping next Q value """
             target_Q = tf.add(reward,
                               tf.scalar_mul(self.discount_factor, tf.reduce_max(self.bootstrap(next_observation))),
-                              name="Target Q")
+                              name="TargetQ")
 
         with tf.GradientTape() as tape:
-            action_one_hot = tf.one_hot(action, num_actions, dtype=tf.float64, name="Action (one hot)")
+            action_one_hot = tf.one_hot(action, num_actions, dtype=tf.float64, name="OneHotAction")
             responsible_Q = tf.reduce_sum(tf.multiply(self.call(observation), action_one_hot),
-                                          name="Responsible Q")
+                                          name="ResponsibleQ")
             # responsible_Q = self(tf.expand_dims(observation[action], 0))
             loss = tf.square(target_Q - responsible_Q, name="Loss")
 
