@@ -73,20 +73,24 @@ class DEOSA(Agent):
         """ learn: performs learning process and updates the parameters of the network """
         self.memory.add(observation=self.convert_observations(observation["user"], observation["services"]),
                         action=action_index,
-                        reward=reward,
+                        reward=float(reward),
                         next_observation=self.convert_observations(next_observation["user"], next_observation["services"]),
                         done=done)
         loss_list = []
 
         if self.memory.is_full():
             """ perform learning process of the network if the memory is full of experiences """
-            batch = self.memory.sample(self.batch_size)
+            observations, actions, rewards, next_observations, done = self.memory.sample(self.batch_size)
 
-            loss_list.append(self.main_network.update(observation=[memory["observation"] for memory in batch],
-                                                      action=[memory["action"] for memory in batch],
-                                                      reward=[float(memory["reward"]) for memory in batch],
-                                                      next_observation=[memory["next_observation"] for memory in batch],
-                                                      done=[memory["done"] for memory in batch]))
+            loss_list.append(self.main_network.update(observation=observations,
+                                                      action=actions,
+                                                      reward=rewards,
+                                                      next_observation=next_observations,
+                                                      done=done))
+
+            """ update target network """
+            self.main_network.update_target_network(self.tau)
+
             return np.mean(loss_list)
 
     def pre_episode_process(self, *kwargs):

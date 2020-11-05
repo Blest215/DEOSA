@@ -14,19 +14,19 @@ class ExperienceMemory:
 
     @abstractmethod
     def add(self, observation, action, reward, next_observation, done):
-        pass
+        self.memory.append([observation, action, reward, next_observation, done])
 
-    @abstractmethod
     def sample(self, batch_size):
-        pass
+        if 0 < len(self.memory) < batch_size:
+            return None
+        # observations, actions, rewards, next_observations, done
+        return map(np.asarray, zip(*random.sample(self.memory, batch_size)))
 
-    @abstractmethod
     def is_full(self):
-        pass
+        return len(self.memory) == self.size
 
-    @abstractmethod
     def is_empty(self):
-        pass
+        return len(self.memory) == 0
 
 
 # Basic experience memory that randomly sampling experiences for DQN
@@ -37,24 +37,7 @@ class BasicExperienceMemory(ExperienceMemory):
             # self.memory.pop(random.randrange(0, len(self.memory)))
             # FIFO
             self.memory.pop(0)
-        self.memory.append({
-            "observation": observation,
-            "action": action,
-            "reward": reward,
-            "next_observation": next_observation,
-            "done": done
-        })
-
-    def sample(self, batch_size):
-        if 0 < len(self.memory) < batch_size:
-            return self.memory
-        return random.sample(self.memory, batch_size)
-
-    def is_full(self):
-        return len(self.memory) == self.size
-
-    def is_empty(self):
-        return len(self.memory) == 0
+        self.memory.append([observation, action, reward, next_observation, done])
 
 
 # Balancing experience memory that balancing reward distribution
@@ -82,21 +65,4 @@ class BalancingExperienceMemory(ExperienceMemory):
         else:
             self.count[reward_value] += 1
 
-        self.memory.append({
-            "observation": observation,
-            "action": action,
-            "reward": reward,
-            "next_observation": next_observation,
-            "done": done
-        })
-
-    def sample(self, batch_size):
-        if 0 < len(self.memory) < batch_size:
-            return self.memory
-        return random.sample(self.memory, batch_size)
-
-    def is_full(self):
-        return len(self.memory) == self.size
-
-    def is_empty(self):
-        return len(self.memory) == 0
+        self.memory.append([observation, action, reward, next_observation, done])
