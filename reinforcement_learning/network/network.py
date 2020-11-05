@@ -8,7 +8,7 @@ class Network(tf.keras.Model):
 
         self.scope = "Network/{name}".format(name=name)
         self.learning_rate = learning_rate
-        self.discount_factor = discount_factor
+        self.discount_factor = tf.constant(discount_factor, dtype=tf.float64)
         self.target_network = None
 
     def set_target_network(self, target_network):

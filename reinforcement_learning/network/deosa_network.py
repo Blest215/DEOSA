@@ -2,7 +2,6 @@ import tensorflow as tf
 
 from reinforcement_learning.network.network import Network
 
-
 OBSERVATION_SIZE = 17
 
 
@@ -22,7 +21,7 @@ class DEOSANetwork(Network):
                                            learning_rate=learning_rate,
                                            discount_factor=discount_factor)
 
-        self.input_layer = tf.keras.layers.InputLayer(input_shape=(OBSERVATION_SIZE,), name="InputLayer")
+        self.input_layer = tf.keras.layers.InputLayer(input_shape=(None, OBSERVATION_SIZE), name="InputLayer")
 
         with tf.name_scope("HiddenLayers"):
             self.hidden_layers = [
@@ -30,55 +29,53 @@ class DEOSANetwork(Network):
                     unit, activation=activation
                 ) for unit in hidden_units
             ]
-        # self.lstm_layer = tf.keras.layers.GRU(1024, activation=activation)
+        # self.lstm_layer = tf.keras.layers.GRU(1024, activation=activation, name="RecurrentLayer")
         self.output_layer = tf.keras.layers.Dense(1, activation=None, name="OutputLayer")
 
         # self._set_inputs(inputs=self.input_layer)  # for saving model without compile or predict
 
         self.optimizer = tf.optimizers.Adam(learning_rate)
 
-        # self.lstm_layer.build((None, OBSERVATION_SIZE))
-        self.build((None, OBSERVATION_SIZE))
+        # self.lstm_layer.build((None, None, hidden_units[-1]))
+        self.build((None, None, OBSERVATION_SIZE))
 
     @tf.function(input_signature=(  # input_signature is specified to avoid frequent retracing
-            tf.TensorSpec(shape=[None, OBSERVATION_SIZE], dtype=tf.float64),
+            tf.TensorSpec(shape=[None, None, OBSERVATION_SIZE], dtype=tf.float64),
     ))
     def call(self, observation, training=None, mask=None):
         z = self.input_layer(observation)
         for layer in self.hidden_layers:
             z = layer(z)
-        output = tf.reshape(self.output_layer(z), [-1], name="Output")
+        # z = self.lstm_layer(z)
+        output = self.output_layer(z)
         return output
 
     @tf.function(input_signature=(  # input_signature is specified to avoid frequent retracing
-            tf.TensorSpec(shape=[None, OBSERVATION_SIZE], dtype=tf.float64),
-            tf.TensorSpec(shape=[], dtype=tf.int32),
-            tf.TensorSpec(shape=[], dtype=tf.float64),
-            tf.TensorSpec(shape=[None, OBSERVATION_SIZE], dtype=tf.float64),
-            tf.TensorSpec(shape=[], dtype=tf.bool)
+            tf.TensorSpec(shape=[None, None, OBSERVATION_SIZE], dtype=tf.float64),
+            tf.TensorSpec(shape=[None], dtype=tf.int32),
+            tf.TensorSpec(shape=[None], dtype=tf.float64),
+            tf.TensorSpec(shape=[None, None, OBSERVATION_SIZE], dtype=tf.float64),
+            tf.TensorSpec(shape=[None], dtype=tf.bool)
     ))
     def update(self, observation, action, reward, next_observation, done):
         """
         update: updates the parameters of the network
         issue: tf.function not working well
         """
-        num_actions = len(observation)
-
-        if done:
-            """ if done, just add reward """
-            target_Q = reward
-        else:
-            """ else, bootstrapping next Q value """
-            target_Q = tf.add(reward,
-                              tf.scalar_mul(self.discount_factor, tf.reduce_max(self.bootstrap(next_observation))),
-                              name="TargetQ")
+        batch_size = len(observation)
+        target_Q = tf.add(reward,
+                          tf.squeeze(tf.multiply(self.discount_factor,
+                                                 tf.reduce_max(self.bootstrap(next_observation),
+                                                               axis=1)),
+                                     axis=1))
 
         with tf.GradientTape() as tape:
-            action_one_hot = tf.one_hot(action, num_actions, dtype=tf.float64, name="OneHotAction")
-            responsible_Q = tf.reduce_sum(tf.multiply(self.call(observation), action_one_hot),
-                                          name="ResponsibleQ")
-            # responsible_Q = self(tf.expand_dims(observation[action], 0))
-            loss = tf.square(target_Q - responsible_Q, name="Loss")
+            indices = tf.stack([tf.range(batch_size), action], axis=1)
+            responsible_Q = tf.gather_nd(params=tf.squeeze(self.call(observation), axis=2),
+                                         indices=indices,
+                                         name="ResponsibleQ")
+
+            loss = tf.reduce_sum(tf.square(tf.subtract(target_Q, responsible_Q)), name="Loss")
 
         variables = self.trainable_variables
         gradients = tape.gradient(loss, variables)

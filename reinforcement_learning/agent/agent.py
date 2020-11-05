@@ -67,14 +67,15 @@ class Agent:
                     """ add reward to total score """
                     reward_list.append(reward)
 
+                    if done:
+                        """ skip training if done """
+                        break
+
                     if train:
                         """ perform learning process if the mode is train """
                         loss = self.learn(observation, action_index, reward, next_observation, done)
                         if loss:
                             loss_list.append(loss)
-
-                    if done:
-                        break
 
                     """ set observation to next state """
                     observation = next_observation

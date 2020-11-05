@@ -54,7 +54,7 @@ class DEOSA(Agent):
             # selection = np.random.choice(range(len(services)), p=p)
         else:
             """ calculate Q-value for each service (action) """
-            Q_set = self.main_network(self.convert_observations(user, services))
+            Q_set = self.main_network([self.convert_observations(user, services)])
             # when effectiveness is available
             # effectiveness = [self.env.reward_function.measure(user, service) for service in services]
             # max_effectiveness = max(effectiveness)
@@ -77,12 +77,11 @@ class DEOSA(Agent):
             """ perform learning process of the network if the memory is full of experiences """
             batch = self.memory.sample(self.batch_size)
 
-            for memory in batch:
-                loss_list.append(self.main_network.update(observation=memory["observation"],
-                                                          action=memory["action"],
-                                                          reward=float(memory["reward"]),
-                                                          next_observation=memory["next_observation"],
-                                                          done=memory["done"]))
+            loss_list.append(self.main_network.update(observation=[memory["observation"] for memory in batch],
+                                                      action=[memory["action"] for memory in batch],
+                                                      reward=[float(memory["reward"]) for memory in batch],
+                                                      next_observation=[memory["next_observation"] for memory in batch],
+                                                      done=[memory["done"] for memory in batch]))
             return np.mean(loss_list)
 
     def post_episode_process(self, i_episode):
