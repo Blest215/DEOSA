@@ -2,45 +2,36 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import argparse
-import os
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument("plot", help="name of plot")
-args = parser.parse_args()
-
-font = {'size': 40}
+font = {'size': 24}
 matplotlib.rc('font', **font)
 exponential_moving_average_window = 25
 
-version1_dir = "data/version1"
-version1_data = {
-        "EDSS": "2019-02-20-12-43-36",
-        "Handover": "2019-02-21-15-35-31",
-        "Nearest": "2019-02-21-15-37-26",
-        "Random": "2019-02-21-15-40-49"
-}
-
-speed1_dir = "data/speed1"
-speed1_data = {
-        "EDSS": "2019-02-26-01-38-14",
-        "Handover": "2019-02-25-13-43-29",
-        "Nearest": "2019-02-25-13-46-24",
-        "Random": "2019-02-25-14-00-19"
-}
+data_datetime = "2020-10-28-21-19-28"
 
 
-def read_data(directory, agent, date, phase, measure):
-    return np.array(
-        pd.read_csv(
-            "{directory}/run_{agent}_{date}_{phase}-tag-{measure}.csv".format(directory=directory,
-                                                                              agent=agent,
-                                                                              date=date,
-                                                                              phase=phase,
-                                                                              measure=measure)
-        )["Value"]
-    )
+def read_data(agent, phase, measure):
+    file_path = "data/run-{agent}_{date}_{phase}-tag-{measure}.csv".format(agent=agent,
+                                                                           date=data_datetime,
+                                                                           phase=phase,
+                                                                           measure=measure)
+    try:
+        return np.array(pd.read_csv(file_path)["Value"])
+    except FileNotFoundError:
+        print("FileNotFound: " + file_path)
+        return None
+
+
+def get_data(measure, train=False):
+    data = {
+        "DEOSA": read_data("DEOSA", "test", measure),
+        "NoReplacement": read_data("NoHandoverSelectionAgent", "test", measure),
+        "Nearest": read_data("NearestSelectionAgent", "test", measure),
+        "Random": read_data("RandomSelectionAgent", "test", measure)
+    }
+    if train:
+        data["DEOSA (train)"] = read_data("DEOSA", "train", measure)
+    return data
 
 
 def linear_filter(value_list, window_size=3):
@@ -53,7 +44,7 @@ def linear_filter(value_list, window_size=3):
         return shifted_list
 
     filtered_list = np.copy(value_list)
-    for s in range(-window_size, window_size+1):
+    for s in range(-window_size, window_size + 1):
         if s != 0:
             filtered_list += shift_sublist(value_list, s)
     return filtered_list / (2 * window_size + 1)
@@ -63,31 +54,30 @@ def exponential_moving_average(value_list, window_size=10):
     ema_list = [value_list[0]]
     multiplier = 2 / (window_size + 1)
     for i in range(1, len(value_list)):
-        ema_list.append(value_list[i]*multiplier + ema_list[-1]*(1-multiplier))
+        ema_list.append(value_list[i] * multiplier + ema_list[-1] * (1 - multiplier))
     return ema_list
 
 
 def set_axis_range(y_axis_range, x_rate=100, y_rate=0.5):
     # Axis
-    plt.xticks(np.arange(0, 1001, x_rate))
+    plt.xticks(np.arange(0, 1000, x_rate))
     plt.yticks(np.arange(y_axis_range[0], y_axis_range[1] + 1, y_rate))
     plt.ylim(y_axis_range)
-    plt.grid(color="white")
 
 
-def get_case_properties(agent):
-    if "EDSS (train)" == agent:
+def get_agent_properties(agent):
+    if "DEOSA (train)" == agent:
         color = "firebrick"
         marker = "o"
-        name = "EDMS (train)"
-    elif "EDSS (test)" == agent or "EDSS" == agent:
+        name = "DEOSA (train)"
+    elif "DEOSA (test)" == agent or "DEOSA" == agent:
         color = "orangered"
         marker = "D"
-        name = "EDMS (test)"
-    elif "Handover" == agent:
+        name = "DEOSA (test)"
+    elif "NoHandover" == agent or "NoReplacement" == agent:
         color = "forestgreen"
         marker = "v"
-        name = "Greedy (handover)"
+        name = "Greedy (no replacement)"
     elif "Nearest" == agent:
         color = "steelblue"
         marker = "^"
@@ -103,27 +93,23 @@ def get_case_properties(agent):
     }
 
 
-def plot_reward(directory_name, data_dict):
-    # Average reward over simulations
-    x_axis = np.array(range(1, 1001))
+def plot_reward():
+    """ plot_reward: Average reward over simulations """
+    x_axis = np.array(range(0, 1000))
 
-    data = {
-        "EDSS (test)": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "test", "Reward_OverallScore_mean_1"),
-        "EDSS (train)": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "train", "Reward_OverallScore_mean_1"),
-        "Handover": read_data(directory_name, "NoHandover", data_dict["Handover"], "test", "Reward_OverallScore_mean_1"),
-        "Nearest": read_data(directory_name, "Nearest", data_dict["Nearest"], "test", "Reward_OverallScore_mean_1"),
-        "Random": read_data(directory_name, "Random", data_dict["Random"], "test", "Reward_OverallScore_mean_1")
-    }
+    data = get_data("reward_mean", train=True)
 
+    # Exponential moving average smoothing with markers
     for agent in data:
         plt.plot(x_axis, exponential_moving_average(data[agent], exponential_moving_average_window),
-                 markevery=50, markersize=25, linewidth=2, **get_case_properties(agent))
+                 markevery=50, markersize=25, linewidth=2, **get_agent_properties(agent))
 
     # 0 line
     plt.axhline(0, color="black", linestyle="dotted")
-
-    # set_axis_range([-3.5, 1], x_rate=100, y_rate=0.5)
-    plt.grid(True)
+    # Ticks
+    set_axis_range([-0.5, 1], x_rate=100, y_rate=0.1)
+    # Grid
+    plt.grid(True, axis="y", color="gray", alpha=0.5, linestyle='--')
 
     # Label
     plt.xlabel("Simulation")
@@ -132,60 +118,26 @@ def plot_reward(directory_name, data_dict):
     # Legend
     plt.legend(facecolor="white", loc=4)
 
+    # Data points
     for agent in data:
-        plt.scatter(x_axis, data[agent], alpha=0.1, s=100, **get_case_properties(agent))
+        plt.scatter(x_axis, data[agent], alpha=0.1, s=100, **get_agent_properties(agent))
 
     plt.show()
 
 
-def plot_statistics(directory_name, data_dict):
-    reward_mean = {
-        "EDSS": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "test", "Reward_OverallScore_mean_1"),
-        "Handover": read_data(directory_name, "NoHandover", data_dict["Handover"], "test", "Reward_OverallScore_mean_1"),
-        "Nearest": read_data(directory_name, "Nearest", data_dict["Nearest"], "test", "Reward_OverallScore_mean_1"),
-        "Random": read_data(directory_name, "Random", data_dict["Random"], "test", "Reward_OverallScore_mean_1")
-    }
+def plot_statistics():
+    reward_mean = get_data("reward_mean")
+    effectiveness_mean = get_data("effectiveness_mean")
+    penalty_mean = get_data("penalty_mean")
 
-    effectiveness_mean = {
-        "EDSS": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "test", "Reward_Effectiveness_mean_1"),
-        "Handover": read_data(directory_name, "NoHandover", data_dict["Handover"], "test", "Reward_Effectiveness_mean_1"),
-        "Nearest": read_data(directory_name, "Nearest", data_dict["Nearest"], "test", "Reward_Effectiveness_mean_1"),
-        "Random": read_data(directory_name, "Random", data_dict["Random"], "test", "Reward_Effectiveness_mean_1")
-    }
-
-    penalty_mean = {
-        "EDSS": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "test", "Reward_Penalty_mean_1"),
-        "Handover": read_data(directory_name, "NoHandover", data_dict["Handover"], "test", "Reward_Penalty_mean_1"),
-        "Nearest": read_data(directory_name, "Nearest", data_dict["Nearest"], "test", "Reward_Penalty_mean_1"),
-        "Random": read_data(directory_name, "Random", data_dict["Random"], "test", "Reward_Penalty_mean_1")
-    }
-
-    reward_stddev = {
-        "EDSS": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "test", "Reward_OverallScore_stddev"),
-        "Handover": read_data(directory_name, "NoHandover", data_dict["Handover"], "test", "Reward_OverallScore_stddev"),
-        "Nearest": read_data(directory_name, "Nearest", data_dict["Nearest"], "test", "Reward_OverallScore_stddev"),
-        "Random": read_data(directory_name, "Random", data_dict["Random"], "test", "Reward_OverallScore_stddev")
-    }
-
-    effectiveness_stddev = {
-        "EDSS": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "test", "Reward_Effectiveness_stddev"),
-        "Handover": read_data(directory_name, "NoHandover", data_dict["Handover"], "test", "Reward_Effectiveness_stddev"),
-        "Nearest": read_data(directory_name, "Nearest", data_dict["Nearest"], "test", "Reward_Effectiveness_stddev"),
-        "Random": read_data(directory_name, "Random", data_dict["Random"], "test", "Reward_Effectiveness_stddev")
-    }
-
-    penalty_stddev = {
-        "EDSS": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "test", "Reward_Penalty_stddev"),
-        "Handover": read_data(directory_name, "NoHandover", data_dict["Handover"], "test", "Reward_Penalty_stddev"),
-        "Nearest": read_data(directory_name, "Nearest", data_dict["Nearest"], "test", "Reward_Penalty_stddev"),
-        "Random": read_data(directory_name, "Random", data_dict["Random"], "test", "Reward_Penalty_stddev")
-    }
+    reward_stddev = get_data("reward_stddev")
+    effectiveness_stddev = get_data("effectiveness_stddev")
+    penalty_stddev = get_data("penalty_stddev")
 
     fig, axes = plt.subplots(2, 3, sharex='all')
 
     # Reward mean
     axes[0, 0].set_title("Reward")
-    #axes[0, 0].set_ylabel('Average Reward')
     axes[0, 0].set_ylabel("Average")
     axes[0, 0].boxplot([reward_mean[agent] for agent in reward_mean], notch=True)
     axes[0, 0].set_xticklabels([agent for agent in reward_mean])
@@ -193,60 +145,45 @@ def plot_statistics(directory_name, data_dict):
 
     # Effectiveness mean
     axes[0, 1].set_title("Effectiveness")
-    #axes[0, 1].set_ylabel('Average Effectiveness')
     axes[0, 1].boxplot([effectiveness_mean[agent] for agent in effectiveness_mean], notch=True)
     axes[0, 1].set_xticklabels([agent for agent in effectiveness_mean])
     axes[0, 1].yaxis.grid(True)
 
     # Penalty mean
     axes[0, 2].set_title("Penalty")
-    #axes[0, 2].set_ylabel('Average Penalty')
     axes[0, 2].boxplot([penalty_mean[agent] for agent in penalty_mean], notch=True)
     axes[0, 2].set_xticklabels([agent for agent in penalty_mean])
     axes[0, 2].yaxis.grid(True)
 
     # Reward stddev
-    #axes[1, 0].set_ylabel('Reward Stddev')
     axes[1, 0].set_ylabel("Standard deviation")
     axes[1, 0].boxplot([reward_stddev[agent] for agent in reward_stddev], notch=True)
     axes[1, 0].set_xticklabels([agent for agent in reward_stddev], rotation=45)
     axes[1, 0].yaxis.grid(True)
 
     # Effectiveness stddev
-    #axes[1, 1].set_ylabel('Effectiveness Stddev')
     axes[1, 1].boxplot([effectiveness_stddev[agent] for agent in effectiveness_stddev], notch=True)
     axes[1, 1].set_xticklabels([agent for agent in effectiveness_stddev], rotation=45)
     axes[1, 1].yaxis.grid(True)
 
     # Penalty stddev
-    #axes[1, 2].set_ylabel('Penalty Stddev')
     axes[1, 2].boxplot([penalty_stddev[agent] for agent in penalty_stddev], notch=True)
     axes[1, 2].set_xticklabels([agent for agent in penalty_stddev], rotation=45)
     axes[1, 2].yaxis.grid(True)
 
+    plt.subplots_adjust(left=0.06, bottom=0.16, right=0.99, top=0.96, wspace=0.3, hspace=0.2)
+
     plt.show()
 
 
-def plot_execution_time(directory_name, data_dict):
-    execution_time_mean = {
-        "EDSS": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "test", "Summary_ExecutionTime_mean_1"),
-        "Handover": read_data(directory_name, "NoHandover", data_dict["Handover"], "test", "Summary_ExecutionTime_mean_1"),
-        "Nearest": read_data(directory_name, "Nearest", data_dict["Nearest"], "test", "Summary_ExecutionTime_mean_1"),
-        "Random": read_data(directory_name, "Random", data_dict["Random"], "test", "Summary_ExecutionTime_mean_1")
-    }
-
-    execution_time_stddev = {
-        "EDSS": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "test", "Summary_ExecutionTime_stddev"),
-        "Handover": read_data(directory_name, "NoHandover", data_dict["Handover"], "test", "Summary_ExecutionTime_stddev"),
-        "Nearest": read_data(directory_name, "Nearest", data_dict["Nearest"], "test", "Summary_ExecutionTime_stddev"),
-        "Random": read_data(directory_name, "Random", data_dict["Random"], "test", "Summary_ExecutionTime_stddev")
-    }
+def plot_execution_time():
+    execution_time_mean = get_data("execution_time_mean")
+    execution_time_stddev = get_data("execution_time_stddev")
 
     fig, axes = plt.subplots(1, 2, sharex='all')
 
     axes[0].boxplot([execution_time_mean[agent] for agent in execution_time_mean], notch=True)
     axes[0].set_ylabel("Average (sec)")
-    #axes[0].set_title("Execution Time")
     axes[0].set_xticklabels([agent for agent in execution_time_mean], rotation=45)
     axes[0].yaxis.grid(True)
 
@@ -255,44 +192,20 @@ def plot_execution_time(directory_name, data_dict):
     axes[1].set_xticklabels([agent for agent in execution_time_mean], rotation=45)
     axes[1].yaxis.grid(True)
 
-    """
-    fig, ax = plt.subplots()
-
-    #ax.set_xlabel('Agent')
-    #ax.set_ylabel('Average Execution Time')
-
-    ax.boxplot([execution_time_mean[agent] for agent in execution_time_mean], notch=True)
-    ax.set_xticklabels([agent for agent in execution_time_mean])
-    ax.yaxis.grid(True)
-    #axes[0].set_title("Greedy (nearest)")
-    #axes[1].boxplot(data["Handover"])
-    #axes[1].set_title("Greedy (handover)")
-    #axes[2].boxplot(data["EDSS (train)"])
-    #axes[2].set_title("EDSS (train)")
-    #axes[3].boxplot(data["EDSS (test)"])
-    #axes[3].set_title("EDSS (test)")
-    """
-
-    # Label
-    #plt.title("Execution Time")
-    #plt.ylabel("Average Execution Time (sec)")
-
-    # Legend
-    #plt.legend(facecolor="white")
-
     plt.show()
 
 
-def plot_loss(directory_name, data_dict):
+def plot_loss():
     data = {
-        "max": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "train", "Summary_Loss_max_1")[10:],
-        "min": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "train", "Summary_Loss_min_1")[10:],
-        "mean": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "train", "Summary_Loss_mean_1")[10:],
-        "stddev": read_data(directory_name, "EDSS(DQN)", data_dict["EDSS"], "train", "Summary_Loss_stddev")[10:]
+        "max": read_data("DEOSA", "train", "loss_max")[10:],
+        "min": read_data("DEOSA", "train", "loss_min")[10:],
+        "mean": read_data("DEOSA", "train", "loss_mean")[10:],
+        "stddev": read_data("DEOSA", "train", "loss_stddev")[10:]
     }
 
     # Average reward over simulations
-    x_axis = np.array(range(11, 1001))
+    # x_axis = np.array(range(11, 1001))
+    x_axis = np.array(range(len(data["max"])))
 
     fig, axes = plt.subplots(1, 4)
 
@@ -319,16 +232,7 @@ def plot_loss(directory_name, data_dict):
     plt.show()
 
 
-directory = speed1_dir
-data = speed1_data
-
-
-if args.plot == "reward":
-    plot_reward(directory, data)
-elif args.plot == "statistics":
-    plot_statistics(directory, data)
-elif args.plot == "execution_time":
-    plot_execution_time(directory, data)
-elif args.plot == "loss":
-    plot_loss(directory, data)
-
+# plot_reward()
+# plot_statistics()
+# plot_execution_time()
+# plot_loss()
