@@ -18,12 +18,11 @@ class DEOSA(Agent):
         self.discount_factor = discount_factor
         self.hidden_units = hidden_units
         self.activation = activation
-        self.tau = tau
 
         """ Network settings """
-        self.main_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor,
+        self.main_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor, tau=tau,
                                          hidden_units=hidden_units, activation=activation)
-        self.target_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor,
+        self.target_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor, tau=tau,
                                            hidden_units=hidden_units, activation=activation)
         self.main_network.set_target_network(self.target_network)
 
@@ -81,7 +80,7 @@ class DEOSA(Agent):
                                                       done=done))
 
             """ update target network """
-            self.main_network.update_target_network(self.tau)
+            self.main_network.update_target_network()
 
             return np.mean(loss_list)
 

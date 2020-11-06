@@ -16,10 +16,11 @@ class DEOSANetwork(Network):
      He, Ji, et al. "Deep reinforcement learning with an action space defined by natural language." (2016).
     """
 
-    def __init__(self, learning_rate, discount_factor, hidden_units, activation):
+    def __init__(self, learning_rate, discount_factor, tau, hidden_units, activation):
         super(DEOSANetwork, self).__init__(name="DEOSANetwork",
                                            learning_rate=learning_rate,
-                                           discount_factor=discount_factor)
+                                           discount_factor=discount_factor,
+                                           tau=tau)
 
         self.input_layer = tf.keras.layers.InputLayer(input_shape=(None, OBSERVATION_SIZE), name="InputLayer")
 
