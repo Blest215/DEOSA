@@ -1,4 +1,3 @@
-import random
 from abc import abstractmethod
 
 from utils import clamp

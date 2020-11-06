@@ -1,4 +1,4 @@
-import random
+import numpy as np
 
 from reinforcement_learning.agent.agent import Agent
 
@@ -7,7 +7,7 @@ class RandomSelectionAgent(Agent):
     """ RandomSelectionAgent: a baseline agent that selects services randomly """
 
     def selection(self, user, services):
-        index = random.choice(range(len(services)))
+        index = np.random.choice(range(len(services)))
         return services[index], index
 
 
@@ -32,7 +32,7 @@ class NoHandoverSelectionAgent(Agent):
             if services[i].in_use and services[i].user == user:
                 return services[i], i
         """ if no service is currently in-use, select randomly """
-        index = random.choice(range(len(services)))
+        index = np.random.choice(range(len(services)))
         return services[index], index
 
 

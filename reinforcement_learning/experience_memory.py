@@ -1,5 +1,4 @@
 import numpy as np
-import random
 import operator
 from abc import abstractmethod
 
@@ -20,7 +19,7 @@ class ExperienceMemory:
         if 0 < len(self.memory) < batch_size:
             return None
         # observations, actions, rewards, next_observations, done
-        return map(np.asarray, zip(*random.sample(self.memory, batch_size)))
+        return map(np.asarray, zip(*np.random.sample(self.memory, batch_size)))
 
     def is_full(self):
         return len(self.memory) == self.size

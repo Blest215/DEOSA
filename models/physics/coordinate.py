@@ -1,5 +1,3 @@
-import random
-
 import numpy as np
 
 from models.math import Vector
@@ -16,7 +14,7 @@ class Coordinate(Vector):
 
 
 def generate_random_coordinate(width, height, depth):
-    return Coordinate(x=random.random() * width, y=random.random() * height, z=random.random() * depth)
+    return Coordinate(x=np.random.random() * width, y=np.random.random() * height, z=np.random.random() * depth)
 
 
 def generate_center_coordinate(width, height, depth):

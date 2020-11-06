@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import random
+import numpy as np
 
 from models.entity.service import Service, VisualOutputService
 from models.entity.user import User
@@ -90,7 +90,7 @@ class Environment:
                     location=generate_random_coordinate(self.width, self.height, self.depth),
                     orientation=Direction(None, None, 0),
                     text_size=self.service_text_size,
-                    scaling_constant=random.randint(self.service_scaling_constant_min, self.service_scaling_constant_max)
+                    scaling_constant=np.random.randint(self.service_scaling_constant_min, self.service_scaling_constant_max)
                 )
             )
 

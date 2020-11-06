@@ -1,5 +1,3 @@
-import random
-
 import numpy as np
 
 from models.math import Rotation, Quaternion
@@ -29,12 +27,15 @@ class Orientation:
 
 
 def generate_random_orientation():
-    return Orientation(random.uniform(-2, 2) * np.pi, random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-1, 1))
+    return Orientation(np.random.uniform(-2, 2) * np.pi,
+                       np.random.uniform(-1, 1),
+                       np.random.uniform(-1, 1),
+                       np.random.uniform(-1, 1))
 
 
 def generate_random_vertical_orientation():
     """ Rotating axis is z-axis, so Orientation head always (0, 0, 1) """
-    return Orientation(random.uniform(-2, 2) * np.pi, 0, 0, 1)
+    return Orientation(np.random.uniform(-2, 2) * np.pi, 0, 0, 1)
 
 
 def generate_random_half_line_orientation(width, height, depth, x, y, z):

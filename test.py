@@ -1,5 +1,4 @@
 import numpy as np
-import random
 from abc import abstractmethod
 
 from models.math import Vector, Quaternion, Rotation
@@ -26,15 +25,15 @@ class QuaternionRotationTest(Test):
 class VectorOperationTest(Test):
     def run(self):
         """ Multiplication within an integer """
-        v1 = Vector(random.random(), random.random(), random.random())
-        m = random.randint(1, 5)
+        v1 = Vector(np.random.random(), np.random.random(), np.random.random())
+        m = np.random.randint(1, 5)
         print(v1, m, v1 * m, m * v1, v1*m == m*v1)
 
         """ Division within a float """
         print(v1, m, v1 / m)
 
         """ Addition """
-        v2 = Vector(random.random(), random.random(), random.random())
+        v2 = Vector(np.random.random(), np.random.random(), np.random.random())
         print(v1, v2, v1 + v2, v2 + v1)
 
         """ Subtraction """

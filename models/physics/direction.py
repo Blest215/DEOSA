@@ -1,5 +1,3 @@
-import random
-
 import numpy as np
 
 from models.math import Vector
@@ -15,11 +13,11 @@ class Direction(Vector):
         else:
             # Randomize if the value is None
             if x is None:
-                x = random.uniform(-1, 1)
+                x = np.random.uniform(-1, 1)
             if y is None:
-                y = random.uniform(-1, 1)
+                y = np.random.uniform(-1, 1)
             if z is None:
-                z = random.uniform(-1, 1)
+                z = np.random.uniform(-1, 1)
             denominator = np.sqrt(np.square(x) + np.square(y) + np.square(z))
             Vector.__init__(self, x=x / denominator, y=y / denominator, z=z / denominator)
         assert np.isclose(self.size(), 1) or np.isclose(self.size(), 0)
