@@ -1,6 +1,5 @@
 import argparse
 import datetime
-import os
 import tensorflow as tf
 
 from experiment import Experiment
@@ -65,10 +64,11 @@ def main():
     if args.agent == "DEOSA" or args.agent == "all":
         experiment.run(
             agent=DEOSA(env, now,
-                        memory_size=100,
+                        memory_size=1000,
                         batch_size=10,
-                        learning_rate=1e-11,
+                        learning_rate=4e-7,
                         discount_factor=.99,
+                        tau=0.001,
                         hidden_units=[512, 512, 512, 512, 512, 512, 512, 512, 512, 512],
                         activation='relu',
                         eps_init=1.0,
