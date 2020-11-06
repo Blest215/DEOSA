@@ -47,15 +47,18 @@ class Agent:
             tf.summary.trace_on()
             with writer.as_default():
                 print("Episode %d" % i_episode)
-                self.pre_episode_process(i_episode)
-                episode_start = time.time()
+
+                """ Set-up """
                 tf.summary.experimental.set_step(i_episode)
-                # random.seed(i_episode)
+                np.random.seed(i_episode)
+                self.pre_episode_process(i_episode)
 
                 loss_list = []  # only for training mode
                 reward_list = []
                 execution_time_list = []
                 observation = self.env.reset()
+
+                episode_start = time.time()
 
                 """ 
                 since service selection is non-episodic task, 

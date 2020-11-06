@@ -49,12 +49,6 @@ class DEOSA(Agent):
         if self.train and np.random.random() < self.eps:
             """ epsilon-greedy """
             selection = np.random.choice(range(len(services)))
-            """ softmax """
-            # observation = self.convert_observations(user, services)
-            # Q_set = self.main_network(observation)
-            # exp = np.exp(Q_set)
-            # p = np.divide(exp, np.sum(exp))
-            # selection = np.random.choice(range(len(services)), p=p)
         else:
             """ calculate Q-value for each service (action) """
             Q_set = self.main_network([self.convert_observations(user, services)])
@@ -117,19 +111,7 @@ class DEOSA(Agent):
         user_tile = np.tile(user.vectorize(), (num_service, 1))
         service_tile = np.array(
             [service.vectorize() for service in services]
-            # [service.vectorize() + [float(self.env.reward_function.reduced_measure(user, service))] for service in services]
-            # [service.vectorize(user) for service in services]
         )
-        # observations = np.subtract(service_tile, user_tile)
         observations = np.concatenate((user_tile, service_tile), axis=1)
-        # observations = service_tile
 
-        # Normalization
-        # observations = np.log(np.add(observations, np.e))
-        # observations = np.subtract(np.log(np.add(observations, np.e)), 1)
-        # observations = np.subtract(np.log10(np.add(observations, 10)), 1)
-        # observations = np.divide(1, np.add(1, np.exp(-observations)))
-        # observations = np.tanh(np.divide(observations, 10))
-        # zero_pad = np.concatenate((user_tile, np.zeros((num_service, 2))), axis=1)
-        # observations = np.tanh(np.subtract(service_tile, zero_pad))
         return observations

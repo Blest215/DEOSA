@@ -40,11 +40,12 @@ class GreedySelectionAgent(Agent):
     """ GreedySelectionAgent: a baseline agent that selects best one currently, in terms of effectiveness """
 
     def selection(self, user, services):
-        maximum = -1000000
-        index = -1
-        for i in range(len(services)):
-            reward = self.env.reward_function.measure(user, services[i])
-            if reward.effectiveness > maximum:
-                index = i
-                maximum = reward.effectiveness
+        effectiveness = [self.env.reward_function.measure(user, service).effectiveness for service in services]
+        maximum = np.max(effectiveness)
+        effective_services_index = np.where(effectiveness == maximum)[0]
+
+        for i in effective_services_index:
+            if services[i].in_use and services[i].user == user:
+                return services[i], i
+        index = np.random.choice(effective_services_index)
         return services[index], index
