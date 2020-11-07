@@ -137,26 +137,3 @@ class Environment:
             done = True
 
         return new_observation, reward, done
-
-    def render(self):  # TODO
-        fig = plt.figure()
-
-        # locations of user and devices
-        plt.scatter(x=[device.coordinate.x for device in self.devices] + [self.user.coordinate.x],
-                    y=[device.coordinate.y for device in self.devices] + [self.user.coordinate.y],
-                    c=["blue" for _ in range(self.num_service)] + ["red"])
-
-        # orientations of user and devices
-        head_width = 0.05
-        head_length = 0.05
-        for device in self.devices:
-            plt.arrow(x=device.coordinate.x, y=device.coordinate.y,
-                      dx=device.orientation.face.i, dy=device.orientation.face.j,
-                      head_width=head_width, head_length=head_length)
-        plt.arrow(x=self.user.coordinate.x, y=self.user.coordinate.y,
-                  dx=self.user.infer_orientation().x, dy=self.user.infer_orientation().y,
-                  head_width=head_width, head_length=head_length)
-
-        # TODO observation range
-
-        plt.show()

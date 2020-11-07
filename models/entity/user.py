@@ -20,6 +20,9 @@ class User(PhysicalEntity):
                                                                                  acuity=self.visual_acuity)
 
     def vectorize(self):
+        from main import FULL_OBSERVATION
+        if FULL_OBSERVATION:
+            return super().vectorize()
         return self.location.vectorize() + self.mobility.vectorize()
 
     def utilize(self, service):

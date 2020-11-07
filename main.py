@@ -19,6 +19,8 @@ args = parser.parse_args()
 
 tf.keras.backend.set_floatx('float64')
 
+FULL_OBSERVATION = True
+
 
 def main():
     """

@@ -45,18 +45,29 @@ class DEOSA(Agent):
             self.main_network.summary(print_fn=lambda x: f.write(x + '\n'))
 
     def selection(self, user, services):
-        if self.train and np.random.random() < self.eps:
-            """ epsilon-greedy """
-            selection = np.random.choice(range(len(services)))
+        from main import FULL_OBSERVATION
+        if FULL_OBSERVATION:
+            # when effectiveness value is available
+            effectiveness = [self.env.reward_function.measure(user, service).effectiveness for service in services]
+            maximum = np.max(effectiveness)
+            effective_services_index = np.where(effectiveness == maximum)[0]
+            if self.train and np.random.random() < self.eps:
+                """ epsilon-greedy """
+                selection = np.random.choice(effective_services_index)
+            else:
+                """ calculate Q-value for each service (action) """
+                Q_set = tf.squeeze(self.main_network([self.convert_observations(user, services)]))
+                mask = tf.constant([0 if i in effective_services_index else -100000000 for i in range(len(services))], dtype=tf.float64)
+                Q_set = tf.add(Q_set, mask)
+                selection = np.argmax(Q_set)
         else:
-            """ calculate Q-value for each service (action) """
-            Q_set = self.main_network([self.convert_observations(user, services)])
-            # when effectiveness is available
-            # effectiveness = [self.env.reward_function.measure(user, service) for service in services]
-            # max_effectiveness = max(effectiveness)
-            # mask = tf.constant([-10000 if effectiveness[i] < max_effectiveness else 0 for i in range(len(services))], dtype=tf.float64)
-            # Q_set = tf.add(Q_set, mask)
-            selection = np.argmax(Q_set)
+            if self.train and np.random.random() < self.eps:
+                """ epsilon-greedy """
+                selection = np.random.choice(range(len(services)))
+            else:
+                """ calculate Q-value for each service (action) """
+                Q_set = self.main_network([self.convert_observations(user, services)])
+                selection = np.argmax(Q_set)
 
         return services[selection], selection
 
