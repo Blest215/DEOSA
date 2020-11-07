@@ -21,3 +21,9 @@ class Direction(Vector):
             denominator = np.sqrt(np.square(x) + np.square(y) + np.square(z))
             Vector.__init__(self, x=x / denominator, y=y / denominator, z=z / denominator)
         assert np.isclose(self.size(), 1) or np.isclose(self.size(), 0)
+
+    def rotate_xy(self, radian):
+        """ rotate_xy: rotate the vector along the xy-plane, ignores z """
+        cos = np.cos(radian)
+        sin = np.sin(radian)
+        return Direction(x=self.x * cos - self.y * sin, y=self.x * sin + self.y * cos, z=self.z)

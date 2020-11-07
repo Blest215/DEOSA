@@ -79,6 +79,7 @@ class Environment:
                                                           direction, self.max_speed),
                      visual_acuity=self.user_visual_acuity)
             )
+            self.users[-1].update_orientation()
         """ the first user becomes primary (main) user """
         self.user = self.users[0]
 
