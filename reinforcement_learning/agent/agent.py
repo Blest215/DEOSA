@@ -50,7 +50,7 @@ class Agent:
 
                 """ Set-up """
                 tf.summary.experimental.set_step(i_episode)
-                np.random.seed(i_episode + (num_episode if train else 0))
+                np.random.seed(i_episode + (0 if train else num_episode))
                 self.pre_episode_process(i_episode)
 
                 loss_list = []  # only for training mode

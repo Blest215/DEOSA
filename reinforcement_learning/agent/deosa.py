@@ -45,29 +45,13 @@ class DEOSA(Agent):
             self.main_network.summary(print_fn=lambda x: f.write(x + '\n'))
 
     def selection(self, user, services):
-        from main import FULL_OBSERVATION
-        if FULL_OBSERVATION:
-            # when effectiveness value is available
-            effectiveness = [self.env.reward_function.measure(user, service).effectiveness for service in services]
-            maximum = np.max(effectiveness)
-            effective_services_index = np.where(effectiveness == maximum)[0]
-            if self.train and np.random.random() < self.eps:
-                """ epsilon-greedy """
-                selection = np.random.choice(effective_services_index)
-            else:
-                """ calculate Q-value for each service (action) """
-                Q_set = tf.squeeze(self.main_network([self.convert_observations(user, services)]))
-                mask = tf.constant([0 if i in effective_services_index else -100000000 for i in range(len(services))], dtype=tf.float64)
-                Q_set = tf.add(Q_set, mask)
-                selection = np.argmax(Q_set)
+        if self.train and np.random.random() < self.eps:
+            """ epsilon-greedy """
+            selection = np.random.choice(range(len(services)))
         else:
-            if self.train and np.random.random() < self.eps:
-                """ epsilon-greedy """
-                selection = np.random.choice(range(len(services)))
-            else:
-                """ calculate Q-value for each service (action) """
-                Q_set = self.main_network([self.convert_observations(user, services)])
-                selection = np.argmax(Q_set)
+            """ calculate Q-value for each service (action) """
+            Q_set = self.main_network([self.convert_observations(user, services)])
+            selection = np.argmax(Q_set)
 
         return services[selection], selection
 
@@ -117,11 +101,18 @@ class DEOSA(Agent):
 
     def convert_observations(self, user, services):
         """ convert_observations: converts user and services information into matrix for the TensorFlow network """
+        from main import FULL_OBSERVATION
+
         num_service = len(services)
         user_tile = np.tile(user.vectorize(), (num_service, 1))
-        service_tile = np.array(
-            [service.vectorize() for service in services]
-        )
+        if FULL_OBSERVATION:
+            service_tile = np.array(
+                [service.vectorize() + [float(self.env.reward_function.measure(user, service))] for service in services]
+            )
+        else:
+            service_tile = np.array(
+                [service.vectorize() for service in services]
+            )
         observations = np.concatenate((user_tile, service_tile), axis=1)
 
         return observations
