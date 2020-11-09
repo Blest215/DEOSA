@@ -14,7 +14,7 @@ class Network(tf.keras.Model):
 
     def set_target_network(self, target_network):
         """ set_target_network: sets target network to update from this network """
-        assert type(self) == type(target_network)
+        assert type(self) == type(target_network) or target_network is None
         self.target_network = target_network
 
     def update_target_network(self):
