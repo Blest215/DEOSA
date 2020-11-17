@@ -20,9 +20,9 @@ class DEOSA(Agent):
         self.activation = activation
 
         """ Network settings """
-        self.main_network = DEOSANetwork(lr=learning_rate, discount_factor=discount_factor, tau=tau,
+        self.main_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor, tau=tau,
                                          hidden_units=hidden_units, activation=activation)
-        self.target_network = DEOSANetwork(lr=learning_rate, discount_factor=discount_factor, tau=tau,
+        self.target_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor, tau=tau,
                                            hidden_units=hidden_units, activation=activation)
         self.main_network.set_target_network(self.target_network)
 
