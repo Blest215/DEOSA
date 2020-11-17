@@ -46,7 +46,7 @@ class Environment:
         self.user_visual_acuity = 0.0
         self.service_text_size = 24
         self.service_scaling_constant_min = 1.0
-        self.service_scaling_constant_max = 3.0
+        self.service_scaling_constant_max = 5.0
 
         self.__setting__ = self.__dict__.copy()
 

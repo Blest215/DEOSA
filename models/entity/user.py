@@ -20,9 +20,6 @@ class User(PhysicalEntity):
                                                                                  acuity=self.visual_acuity)
 
     def vectorize(self):
-        from main import FULL_OBSERVATION
-        if FULL_OBSERVATION:
-            return super().vectorize()
         return self.location.vectorize() + self.mobility.vectorize()
 
     def utilize(self, service):
@@ -38,5 +35,5 @@ class User(PhysicalEntity):
     def update_orientation(self):
         """ update orientation of user head from mobility """
         # restrict orientation about 30 degree (0.5 radian) from mobility direction
-        rotation_angle_radian = np.random.normal(loc=0.0, scale=0.25)
+        rotation_angle_radian = np.random.normal(loc=0.0, scale=0.75)
         self.orientation = self.mobility.direction.rotate_xy(rotation_angle_radian)

@@ -19,8 +19,6 @@ args = parser.parse_args()
 
 tf.keras.backend.set_floatx('float64')
 
-FULL_OBSERVATION = True
-
 
 def main():
     """
@@ -36,9 +34,9 @@ def main():
     env = Environment(num_user=1,
                       num_service=100,
                       width=100,  # x
-                      height=20,  # y
-                      depth=3,  # z
-                      max_speed=1,
+                      height=10,  # y
+                      depth=5,  # z
+                      max_speed=2,
                       # observation=EuclideanObservation(observation_range=10),
                       observation=FullObservation(),
                       reward_function=RewardFunction(effectiveness_function=VisualEffectivenessFunction(
@@ -48,7 +46,7 @@ def main():
 
     experiment = Experiment(env=env,
                             num_episode=1000,
-                            num_step=100,
+                            num_step=50,
                             now=now)
 
     if args.agent == "random" or args.agent == "all":
@@ -67,8 +65,8 @@ def main():
         experiment.run(
             agent=DEOSA(env, now,
                         memory_size=1000,
-                        batch_size=10,
-                        learning_rate=4e-7,
+                        batch_size=20,
+                        learning_rate=1e-6,
                         discount_factor=.99,
                         tau=0.001,
                         hidden_units=[512, 512, 512, 512, 512, 512, 512, 512, 512, 512],

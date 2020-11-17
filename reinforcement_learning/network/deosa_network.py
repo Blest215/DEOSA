@@ -2,7 +2,7 @@ import tensorflow as tf
 
 from reinforcement_learning.network.network import Network
 
-OBSERVATION_SIZE = 21
+OBSERVATION_SIZE = 17
 
 
 class DEOSANetwork(Network):

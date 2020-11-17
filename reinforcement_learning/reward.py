@@ -3,7 +3,6 @@ import json
 from abc import abstractmethod
 
 from models.effectiveness import EffectivenessFunction
-from utils import variable_summaries
 
 
 class Reward:

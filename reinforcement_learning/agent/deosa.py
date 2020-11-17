@@ -20,9 +20,9 @@ class DEOSA(Agent):
         self.activation = activation
 
         """ Network settings """
-        self.main_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor, tau=tau,
+        self.main_network = DEOSANetwork(lr=learning_rate, discount_factor=discount_factor, tau=tau,
                                          hidden_units=hidden_units, activation=activation)
-        self.target_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor, tau=tau,
+        self.target_network = DEOSANetwork(lr=learning_rate, discount_factor=discount_factor, tau=tau,
                                            hidden_units=hidden_units, activation=activation)
         self.main_network.set_target_network(self.target_network)
 
@@ -101,18 +101,12 @@ class DEOSA(Agent):
 
     def convert_observations(self, user, services):
         """ convert_observations: converts user and services information into matrix for the TensorFlow network """
-        from main import FULL_OBSERVATION
 
         num_service = len(services)
         user_tile = np.tile(user.vectorize(), (num_service, 1))
-        if FULL_OBSERVATION:
-            service_tile = np.array(
-                [service.vectorize() + [float(self.env.reward_function.measure(user, service))] for service in services]
-            )
-        else:
-            service_tile = np.array(
-                [service.vectorize() for service in services]
-            )
+        service_tile = np.array(
+            [service.vectorize() for service in services]
+        )
         observations = np.concatenate((user_tile, service_tile), axis=1)
 
         return observations

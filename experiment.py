@@ -33,14 +33,12 @@ class Experiment:
         self.agent = agent
         self.save()
 
-        self.reset()
         # with tf.device('GPU:1'):
         if train:
             assert isinstance(self.agent, DEOSA)
             self.agent.run(num_episode=self.num_episode,
                            num_step=self.num_step,
                            train=True)
-            self.agent.main_network.set_target_network(None)
         self.agent.run(num_episode=self.num_episode,
                        num_step=self.num_step,
                        train=False)
