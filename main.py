@@ -69,7 +69,7 @@ def main():
                         learning_rate=1e-6,
                         discount_factor=.99,
                         tau=0.001,
-                        hidden_units=[512, 512, 512, 512, 512, 512, 512, 512, 512, 512],
+                        hidden_units=[512, 512, 512, 512, 512],
                         activation='relu',
                         eps_init=1.0,
                         eps_final=0.1,
