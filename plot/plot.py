@@ -3,15 +3,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-font = {'size': 24}
+font = {'size': 36}
 matplotlib.rc('font', **font)
 exponential_moving_average_window = 25
 
-data_datetime = "2020-10-28-21-19-28"
+data_datetime = "2020-11-17-14-12-49"
 
 
 def read_data(agent, phase, measure):
-    file_path = "data/run-{agent}_{date}_{phase}-tag-{measure}.csv".format(agent=agent,
+    file_path = "data/run-{date}_{agent}_{phase}-tag-{measure}.csv".format(agent=agent,
                                                                            date=data_datetime,
                                                                            phase=phase,
                                                                            measure=measure)
@@ -24,13 +24,16 @@ def read_data(agent, phase, measure):
 
 def get_data(measure, train=False):
     data = {
-        "DEOSA": read_data("DEOSA", "test", measure),
-        "NoReplacement": read_data("NoHandoverSelectionAgent", "test", measure),
-        "Nearest": read_data("NearestSelectionAgent", "test", measure),
-        "Random": read_data("RandomSelectionAgent", "test", measure)
+        "DEOSA": read_data("DEOSA", "test", measure)
     }
     if train:
         data["DEOSA (train)"] = read_data("DEOSA", "train", measure)
+
+    data["Greedy"] = read_data("GreedySelectionAgent", "test", measure)
+    data["NoReplace"] = read_data("NoHandoverSelectionAgent", "test", measure)
+    data["Nearest"] = read_data("NearestSelectionAgent", "test", measure)
+    data["Random"] = read_data("RandomSelectionAgent", "test", measure)
+
     return data
 
 
@@ -60,28 +63,32 @@ def exponential_moving_average(value_list, window_size=10):
 
 def set_axis_range(y_axis_range, x_rate=100, y_rate=0.5):
     # Axis
-    plt.xticks(np.arange(0, 1000, x_rate))
+    plt.xticks(np.arange(0, 1001, x_rate))
     plt.yticks(np.arange(y_axis_range[0], y_axis_range[1] + 1, y_rate))
     plt.ylim(y_axis_range)
 
 
 def get_agent_properties(agent):
     if "DEOSA (train)" == agent:
-        color = "firebrick"
-        marker = "o"
+        color = "indianred"
+        marker = "P"
         name = "DEOSA (train)"
     elif "DEOSA (test)" == agent or "DEOSA" == agent:
-        color = "orangered"
-        marker = "D"
+        color = "firebrick"
+        marker = "*"
         name = "DEOSA (test)"
-    elif "NoHandover" == agent or "NoReplacement" == agent:
-        color = "forestgreen"
-        marker = "v"
-        name = "Greedy (no replacement)"
+    elif "NoHandover" == agent or "NoReplace" == agent:
+        color = "sandybrown"
+        marker = "h"
+        name = "NoReplace"
     elif "Nearest" == agent:
-        color = "steelblue"
-        marker = "^"
-        name = "Greedy (nearest)"
+        color = "royalblue"
+        marker = "."
+        name = "Nearest"
+    elif "Greedy" == agent:
+        color = "forestgreen"
+        marker = "p"
+        name = "Greedy"
     else:
         color = "gray"
         marker = ","
@@ -102,10 +109,10 @@ def plot_reward():
     # Exponential moving average smoothing with markers
     for agent in data:
         plt.plot(x_axis, exponential_moving_average(data[agent], exponential_moving_average_window),
-                 markevery=50, markersize=25, linewidth=2, **get_agent_properties(agent))
+                 markevery=50, markersize=50, linewidth=2, **get_agent_properties(agent))
 
     # 0 line
-    plt.axhline(0, color="black", linestyle="dotted")
+    plt.axhline(0, color="black", linestyle="-")
     # Ticks
     set_axis_range([-0.5, 1], x_rate=100, y_rate=0.1)
     # Grid
@@ -120,7 +127,9 @@ def plot_reward():
 
     # Data points
     for agent in data:
-        plt.scatter(x_axis, data[agent], alpha=0.1, s=100, **get_agent_properties(agent))
+        plt.scatter(x_axis, data[agent], alpha=0.1, s=200, **get_agent_properties(agent))
+
+    plt.subplots_adjust(left=0.08, bottom=0.08, right=0.99, top=0.98, wspace=0.3, hspace=0.2)
 
     plt.show()
 
@@ -171,7 +180,7 @@ def plot_statistics():
     axes[1, 2].set_xticklabels([agent for agent in penalty_stddev], rotation=45)
     axes[1, 2].yaxis.grid(True)
 
-    plt.subplots_adjust(left=0.06, bottom=0.16, right=0.99, top=0.96, wspace=0.3, hspace=0.2)
+    plt.subplots_adjust(left=0.07, bottom=0.17, right=0.99, top=0.95, wspace=0.3, hspace=0.2)
 
     plt.show()
 
@@ -191,6 +200,8 @@ def plot_execution_time():
     axes[1].set_ylabel("Standard deviation")
     axes[1].set_xticklabels([agent for agent in execution_time_mean], rotation=45)
     axes[1].yaxis.grid(True)
+
+    plt.subplots_adjust(left=0.06, bottom=0.1, right=0.99, top=0.99, wspace=0.4, hspace=0.2)
 
     plt.show()
 
@@ -234,5 +245,5 @@ def plot_loss():
 
 # plot_reward()
 # plot_statistics()
-# plot_execution_time()
+plot_execution_time()
 # plot_loss()
