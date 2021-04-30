@@ -8,8 +8,8 @@ from utils import variable_summaries, get_summary_path
 
 
 class Agent:
-    def __init__(self, env, now):
-        self.name = type(self).__name__
+    def __init__(self, name, env, now):
+        self.name = name
 
         self.__setting__ = self.__dict__.copy()
 
@@ -50,7 +50,7 @@ class Agent:
 
                 """ Set-up """
                 tf.summary.experimental.set_step(i_episode)
-                np.random.seed(i_episode + (0 if train else num_episode) + 10000)
+                # np.random.seed(i_episode + (0 if train else num_episode) + 10000)
                 self.pre_episode_process(i_episode)
 
                 loss_list = []  # only for training mode

@@ -5,7 +5,6 @@ from reinforcement_learning.agent.agent import Agent
 
 class RandomSelectionAgent(Agent):
     """ RandomSelectionAgent: a baseline agent that selects services randomly """
-
     def selection(self, user, services):
         index = np.random.choice(range(len(services)))
         return services[index], index
@@ -13,7 +12,6 @@ class RandomSelectionAgent(Agent):
 
 class NearestSelectionAgent(Agent):
     """ ClosestSelectionAgent: a baseline agent that selects the nearest service"""
-
     def selection(self, user, services):
         minimum = 1000000
         index = -1
@@ -26,7 +24,6 @@ class NearestSelectionAgent(Agent):
 
 class NoHandoverSelectionAgent(Agent):
     """ NoHandoverSelectionAgent: a baseline agent that minimizes the number of handovers """
-
     def selection(self, user, services):
         for i in range(len(services)):
             if services[i].in_use and services[i].user == user:
@@ -38,7 +35,6 @@ class NoHandoverSelectionAgent(Agent):
 
 class GreedySelectionAgent(Agent):
     """ GreedySelectionAgent: a baseline agent that selects best one currently, in terms of effectiveness """
-
     def selection(self, user, services):
         def measure(service):
             relative_location = service.device.location - user.location

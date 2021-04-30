@@ -4,27 +4,18 @@ import inspect
 
 from reinforcement_learning.agent.agent import Agent
 from reinforcement_learning.experience_memory import BasicExperienceMemory
-from reinforcement_learning.network.deosa_network import DEOSANetwork
 from utils import get_summary_path
 
 
 class DEOSA(Agent):
     def __init__(self, env, now,
-                 memory_size, batch_size, learning_rate, discount_factor, tau,
-                 hidden_units, activation,
+                 memory_size, batch_size,
+                 network,
                  eps_init, eps_final, eps_decay):
 
-        self.learning_rate = learning_rate
-        self.discount_factor = discount_factor
-        self.hidden_units = hidden_units
-        self.activation = activation
-
         """ Network settings """
-        self.main_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor, tau=tau,
-                                         hidden_units=hidden_units, activation=activation)
-        self.target_network = DEOSANetwork(learning_rate=learning_rate, discount_factor=discount_factor, tau=tau,
-                                           hidden_units=hidden_units, activation=activation)
-        self.main_network.set_target_network(self.target_network)
+        self.main_network = network
+        self.main_network.create_target_network()
 
         """ Experience memory settings """
         self.memory = BasicExperienceMemory(memory_size)
@@ -39,12 +30,17 @@ class DEOSA(Agent):
         self.selection_code = inspect.getsource(self.selection)
         self.normalization_code = inspect.getsource(self.convert_observations)
 
-        Agent.__init__(self, env, now)
+        Agent.__init__(self, "{agent}/{network}".format(agent=type(self).__name__,
+                                                        network=type(network).__name__),
+                       env, now)
 
         with open(get_summary_path(agent=self.name, datetime=self.now, filename="model.txt"), 'w') as f:
             self.main_network.summary(print_fn=lambda x: f.write(x + '\n'))
 
     def selection(self, user, services):
+        # Q = np.squeeze(self.main_network([self.convert_observations(user, services)]))
+        # softmax = np.exp(Q) / np.sum(np.exp(Q))
+        # selection = np.random.choice(range(len(services)), p=softmax)
         if self.train and np.random.random() < self.eps:
             """ epsilon-greedy """
             selection = np.random.choice(range(len(services)))
@@ -68,10 +64,10 @@ class DEOSA(Agent):
             """ perform learning process of the network if the memory is full of experiences """
             observations, actions, rewards, next_observations, done = self.memory.sample(self.batch_size)
 
-            loss_list.append(self.main_network.update(observation=observations,
-                                                      action=actions,
-                                                      reward=rewards,
-                                                      next_observation=next_observations,
+            loss_list.append(self.main_network.update(observations=observations,
+                                                      actions=actions,
+                                                      rewards=rewards,
+                                                      next_observations=next_observations,
                                                       done=done))
 
             """ update target network """
@@ -83,7 +79,7 @@ class DEOSA(Agent):
         """ pre_episode_process """
 
         """ copy target network """
-        # self.main_network.copy_from_target_network()
+        self.main_network.copy_from_target_network()
 
     def post_episode_process(self, i_episode):
         """ post_episode_process """
@@ -94,10 +90,10 @@ class DEOSA(Agent):
         else:
             self.eps = self.eps_final
 
-        if i_episode % 10 == 9:
-            """ save the trained model for each 10-episodes """
-            # self.main_network.save(get_summary_path(self.name, self.datetime, "train"), save_format='tf')
-            # tf.saved_model.save(self.main_network, get_summary_path(self.name, self.datetime, "train"))
+        # if i_episode % 10 == 9:
+        #     """ save the trained model for each 10-episodes """
+        #     self.main_network.save(get_summary_path(self.name, self.datetime, "train"), save_format='tf')
+        #     tf.saved_model.save(self.main_network, get_summary_path(self.name, self.datetime, "train"))
 
     def convert_observations(self, user, services):
         """ convert_observations: converts user and services information into matrix for the TensorFlow network """

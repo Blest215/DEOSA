@@ -11,10 +11,8 @@ class Experiment:
     """
         Experiment: The experiment class for the evaluation of dynamic and effect-driven selection of output-services
     """
-    def __init__(self, env, now, num_episode, num_step):
+    def __init__(self, now, num_episode, num_step):
         """ __init__: simply add all the given parameters as its attributes """
-
-        self.env = env
 
         self.agent = None
 
@@ -24,9 +22,6 @@ class Experiment:
 
         # Experiment datetime
         self.now = now
-
-    def reset(self):
-        self.env.reset()
 
     def run(self, agent, train=False):
         assert isinstance(agent, Agent)
