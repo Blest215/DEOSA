@@ -7,7 +7,7 @@ font = {'size': 36}
 matplotlib.rc('font', **font)
 exponential_moving_average_window = 25
 
-data_datetime = "2020-11-17-14-12-49"
+data_datetime = "2021-05-17-02-20-28"
 
 
 def read_data(agent, phase, measure):
@@ -22,19 +22,14 @@ def read_data(agent, phase, measure):
         return None
 
 
-def get_data(measure, train=False):
-    data = {
-        "DEOSA": read_data("DEOSA", "test", measure)
+def get_test_data(measure):
+    return {
+        "DEOSA": read_data("DEOSA_MunchausenDQNetwork", "test", measure),
+        "Greedy": read_data("Greedy", "test", measure),
+        "NoReplace": read_data("NoHandover", "test", measure),
+        "Nearest": read_data("Nearest", "test", measure),
+        "Random": read_data("Random", "test", measure)
     }
-    if train:
-        data["DEOSA (train)"] = read_data("DEOSA", "train", measure)
-
-    data["Greedy"] = read_data("GreedySelectionAgent", "test", measure)
-    data["NoReplace"] = read_data("NoHandoverSelectionAgent", "test", measure)
-    data["Nearest"] = read_data("NearestSelectionAgent", "test", measure)
-    data["Random"] = read_data("RandomSelectionAgent", "test", measure)
-
-    return data
 
 
 def linear_filter(value_list, window_size=3):
@@ -68,55 +63,129 @@ def set_axis_range(y_axis_range, x_rate=100, y_rate=0.5):
     plt.ylim(y_axis_range)
 
 
-def get_agent_properties(agent):
-    if "DEOSA (train)" == agent:
-        color = "indianred"
-        marker = "P"
-        name = "DEOSA (train)"
-    elif "DEOSA (test)" == agent or "DEOSA" == agent:
-        color = "firebrick"
-        marker = "*"
-        name = "DEOSA (test)"
-    elif "NoHandover" == agent or "NoReplace" == agent:
-        color = "sandybrown"
-        marker = "h"
-        name = "NoReplace"
-    elif "Nearest" == agent:
-        color = "royalblue"
-        marker = "."
-        name = "Nearest"
-    elif "Greedy" == agent:
-        color = "forestgreen"
-        marker = "p"
-        name = "Greedy"
-    else:
-        color = "gray"
-        marker = ","
-        name = "Random"
-    return {
-        "color": color,
-        "marker": marker,
-        "label": name
-    }
-
-
 def plot_reward():
     """ plot_reward: Average reward over simulations """
+
+    def get_agent_properties(agent):
+        if "DEOSA (train)" == agent:
+            color = "indianred"
+            marker = "^"
+            name = "DEOSA (train)"
+        elif "DEOSA (test)" == agent or "DEOSA" == agent:
+            color = "firebrick"
+            marker = "*"
+            name = "DEOSA (test)"
+        elif "NoHandover" == agent or "NoReplace" == agent:
+            color = "sandybrown"
+            marker = "h"
+            name = "NoReplace"
+        elif "Nearest" == agent:
+            color = "royalblue"
+            marker = "p"
+            name = "Nearest"
+        elif "Greedy" == agent:
+            color = "forestgreen"
+            marker = "."
+            name = "Greedy"
+        else:
+            color = "gray"
+            marker = ","
+            name = "Random"
+        return {
+            "color": color,
+            "marker": marker,
+            "label": name
+        }
+
     x_axis = np.array(range(0, 1000))
 
-    data = get_data("reward_mean", train=True)
+    measure = "reward_mean"
+    data = {
+        "Random": read_data("Random", "test", measure),
+        "Nearest": read_data("Nearest", "test", measure),
+        "NoReplace": read_data("NoHandover", "test", measure),
+        "Greedy": read_data("Greedy", "test", measure),
+        "DEOSA (train)": read_data("DEOSA_MunchausenDQNetwork", "train", measure),
+        "DEOSA (test)": read_data("DEOSA_MunchausenDQNetwork", "test", measure)
+    }
 
     # Exponential moving average smoothing with markers
     for agent in data:
         plt.plot(x_axis, exponential_moving_average(data[agent], exponential_moving_average_window),
-                 markevery=50, markersize=50, linewidth=2, **get_agent_properties(agent))
+                 markevery=50, markersize=40, linewidth=2, **get_agent_properties(agent))
 
     # 0 line
     plt.axhline(0, color="black", linestyle="-")
     # Ticks
-    set_axis_range([-0.5, 1], x_rate=100, y_rate=0.1)
+    set_axis_range([-0.5, 0.8], x_rate=100, y_rate=0.1)
     # Grid
-    plt.grid(True, axis="y", color="gray", alpha=0.5, linestyle='--')
+    plt.grid(True, axis="both", color="gray", alpha=0.5, linestyle='--')
+
+    # Label
+    plt.xlabel("Simulation")
+    plt.ylabel("Average Reward")
+
+    # Legend
+    plt.legend(facecolor="white", loc=4)
+
+    # Data points
+    for agent in data:
+        plt.scatter(x_axis, data[agent], alpha=0.1, s=200, **get_agent_properties(agent))
+
+    plt.subplots_adjust(left=0.08, bottom=0.08, right=0.99, top=0.98, wspace=0.3, hspace=0.2)
+
+    plt.show()
+
+
+def plot_reward_network_comparison():
+    def get_agent_properties(agent):
+        if "DEOSA (train)" == agent:
+            color = "indianred"
+            marker = "^"
+            name = "DEOSA (train)"
+        elif "DEOSA (test)" == agent:
+            color = "firebrick"
+            marker = "*"
+            name = "DEOSA (test)"
+        elif "DQN (train)" == agent:
+            color = "limegreen"
+            marker = "P"
+            name = "DQN (train)"
+        elif "DQN (test)" == agent:
+            color = "seagreen"
+            marker = "X"
+            name = "DQN (test)"
+        else:
+            color = "gray"
+            marker = ","
+            name = "Random"
+        return {
+            "color": color,
+            "marker": marker,
+            "label": name
+        }
+
+    x_axis = np.array(range(0, 1000))
+
+    measure = "reward_mean"
+    data = {
+        "DQN (train)": read_data("DEOSA_DQNetwork", "train", measure),
+        "DQN (test)": read_data("DEOSA_DQNetwork", "test", measure),
+        "DEOSA (train)": read_data("DEOSA_MunchausenDQNetwork", "train", measure),
+        "DEOSA (test)": read_data("DEOSA_MunchausenDQNetwork", "test", measure)
+    }
+
+    # Exponential moving average smoothing with markers
+    for agent in data:
+        plt.plot(x_axis, exponential_moving_average(data[agent], exponential_moving_average_window),
+                 markevery=50, markersize=40, linewidth=2, **get_agent_properties(agent))
+
+    # 0 line
+    plt.axhline(0, color="black", linestyle="-")
+    # Ticks
+    set_axis_range([-0.5, 0.8], x_rate=100, y_rate=0.1)
+    # Grid
+    plt.grid(True, axis="both", color="gray", alpha=0.5, linestyle='--')
 
     # Label
     plt.xlabel("Simulation")
@@ -135,15 +204,15 @@ def plot_reward():
 
 
 def plot_statistics():
-    reward_mean = get_data("reward_mean")
-    effectiveness_mean = get_data("effectiveness_mean")
-    penalty_mean = get_data("penalty_mean")
+    reward_mean = get_test_data("reward_mean")
+    effectiveness_mean = get_test_data("effectiveness_mean")
+    penalty_mean = get_test_data("penalty_mean")
 
-    reward_stddev = get_data("reward_stddev")
-    effectiveness_stddev = get_data("effectiveness_stddev")
-    penalty_stddev = get_data("penalty_stddev")
+    reward_stddev = get_test_data("reward_stddev")
+    effectiveness_stddev = get_test_data("effectiveness_stddev")
+    penalty_stddev = get_test_data("penalty_stddev")
 
-    fig, axes = plt.subplots(2, 3, sharex='all')
+    fig, axes = plt.subplots(2, 3, sharex='all', sharey='row')
 
     # Reward mean
     axes[0, 0].set_title("Reward")
@@ -186,8 +255,8 @@ def plot_statistics():
 
 
 def plot_execution_time():
-    execution_time_mean = get_data("execution_time_mean")
-    execution_time_stddev = get_data("execution_time_stddev")
+    execution_time_mean = get_test_data("execution_time_mean")
+    execution_time_stddev = get_test_data("execution_time_stddev")
 
     fig, axes = plt.subplots(1, 2, sharex='all')
 
@@ -244,6 +313,7 @@ def plot_loss():
 
 
 # plot_reward()
+plot_reward_network_comparison()
 # plot_statistics()
-plot_execution_time()
+# plot_execution_time()
 # plot_loss()

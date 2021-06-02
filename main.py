@@ -42,7 +42,7 @@ def main():
                       reward_function=RewardFunction(effectiveness_function=VisualEffectivenessFunction(
                           visual_field_max=80,
                           viewing_angle_max=70
-                      ), penalty=1.0, weight=None))
+                      ), penalty=0.5, weight=None))
 
     experiment = Experiment(num_episode=1000,
                             num_step=50,
@@ -61,18 +61,30 @@ def main():
         experiment.run(agent=NoHandoverSelectionAgent("NoHandover", env, now), train=False)
 
     if args.agent == "DEOSA" or args.agent == "all":
-        learning_rate = 1e-3
+        learning_rate = 5e-5
+        # learning_rate = tf.keras.optimizers.schedules.ExponentialDecay(
+        #     initial_learning_rate=1e-3,
+        #     decay_steps=100,
+        #     decay_rate=0.99,
+        #     staircase=True
+        # )
         discount_factor = 0.99
         tau = 0.01
-        temperature = 0.01
+        temperature = 0.1
         alpha = 0.9
-        hidden_units = [1024, 1024]
+        hidden_units = [2048, 2048, 2048]
         activation = 'relu'
+
+        memory_size = 1000
+        batch_size = 50
+        eps_init = 1.0
+        eps_final = 0.1
+        eps_decay = 0.99
 
         experiment.run(
             agent=DEOSA(env, now,
-                        memory_size=1000,
-                        batch_size=20,
+                        memory_size=memory_size,
+                        batch_size=batch_size,
                         network=DQNetwork(learning_rate=learning_rate,
                                           discount_factor=discount_factor,
                                           tau=tau,
@@ -80,33 +92,33 @@ def main():
                                           alpha=alpha,
                                           hidden_units=hidden_units,
                                           activation=activation),
-                        eps_init=1.0,
-                        eps_final=0.1,
-                        eps_decay=0.999),
+                        eps_init=eps_init,
+                        eps_final=eps_final,
+                        eps_decay=eps_decay),
             train=True
         )
 
-        experiment.run(
-            agent=DEOSA(env, now,
-                        memory_size=1000,
-                        batch_size=20,
-                        network=SoftDQNetwork(learning_rate=learning_rate,
-                                              discount_factor=discount_factor,
-                                              tau=tau,
-                                              temperature=temperature,
-                                              alpha=alpha,
-                                              hidden_units=hidden_units,
-                                              activation=activation),
-                        eps_init=1.0,
-                        eps_final=0.1,
-                        eps_decay=0.999),
-            train=True
-        )
+        # experiment.run(
+        #     agent=DEOSA(env, now,
+        #                 memory_size=memory_size,
+        #                 batch_size=batch_size,
+        #                 network=SoftDQNetwork(learning_rate=learning_rate,
+        #                                       discount_factor=discount_factor,
+        #                                       tau=tau,
+        #                                       temperature=temperature,
+        #                                       alpha=alpha,
+        #                                       hidden_units=hidden_units,
+        #                                       activation=activation),
+        #                 eps_init=eps_init,
+        #                 eps_final=eps_final,
+        #                 eps_decay=eps_decay),
+        #     train=True
+        # )
 
         experiment.run(
             agent=DEOSA(env, now,
-                        memory_size=1000,
-                        batch_size=20,
+                        memory_size=memory_size,
+                        batch_size=batch_size,
                         network=MunchausenDQNetwork(learning_rate=learning_rate,
                                                     discount_factor=discount_factor,
                                                     tau=tau,
@@ -114,9 +126,9 @@ def main():
                                                     alpha=alpha,
                                                     hidden_units=hidden_units,
                                                     activation=activation),
-                        eps_init=1.0,
-                        eps_final=0.1,
-                        eps_decay=0.999),
+                        eps_init=eps_init,
+                        eps_final=eps_final,
+                        eps_decay=eps_decay),
             train=True
         )
 

@@ -38,16 +38,10 @@ class DEOSA(Agent):
             self.main_network.summary(print_fn=lambda x: f.write(x + '\n'))
 
     def selection(self, user, services):
-        # Q = np.squeeze(self.main_network([self.convert_observations(user, services)]))
-        # softmax = np.exp(Q) / np.sum(np.exp(Q))
-        # selection = np.random.choice(range(len(services)), p=softmax)
-        if self.train and np.random.random() < self.eps:
-            """ epsilon-greedy """
-            selection = np.random.choice(range(len(services)))
-        else:
-            """ calculate Q-value for each service (action) """
-            Q_set = self.main_network([self.convert_observations(user, services)])
-            selection = np.argmax(Q_set)
+        selection = self.main_network.selection(
+            np.squeeze(self.main_network([self.convert_observations(user, services)])),
+            self.eps if self.train else 0
+        )
 
         return services[selection], selection
 
@@ -56,7 +50,8 @@ class DEOSA(Agent):
         self.memory.add(observation=self.convert_observations(observation["user"], observation["services"]),
                         action=action_index,
                         reward=float(reward),
-                        next_observation=self.convert_observations(next_observation["user"], next_observation["services"]),
+                        next_observation=self.convert_observations(next_observation["user"],
+                                                                   next_observation["services"]),
                         done=done)
         loss_list = []
 

@@ -9,7 +9,6 @@ class Network(tf.keras.Model):
         super(Network, self).__init__(name=type(self).__name__)
         self.scope = "Network/{name}".format(name=self.name)
 
-        self.learning_rate = learning_rate
         self.discount_factor = tf.constant(discount_factor, dtype=tf.float64)
         self.tau = tau
         self.temperature = tf.constant(temperature, dtype=tf.float64)
@@ -17,9 +16,12 @@ class Network(tf.keras.Model):
         self.hidden_units = hidden_units
         self.activation = activation
 
+        self.learning_rate = learning_rate
+
         self.__setting__ = {
             'name': self.name,
-            'learning_rate': learning_rate,
+            # 'learning_rate': self.learning_rate.get_config(),
+            'learning_rate': self.learning_rate,
             'discount_factor': discount_factor,
             'tau': tau,
             'temperature': temperature,
@@ -40,7 +42,7 @@ class Network(tf.keras.Model):
             ]
 
         self.output_layer = tf.keras.layers.Dense(1, activation=None, name="OutputLayer")
-        self.optimizer = tf.optimizers.Adam(learning_rate)
+        self.optimizer = tf.optimizers.Adam(self.learning_rate)
         self.build((None, None, OBSERVATION_SIZE))
 
     def create_target_network(self):
@@ -90,14 +92,8 @@ class Network(tf.keras.Model):
         z = self.input_layer(observation)
         for layer in self.hidden_layers:
             z = layer(z)
-        # z = self.lstm_layer(z)
         output = self.output_layer(z)
         return output
-
-    @abstractmethod
-    def target(self, observations, actions, rewards, next_observations, done):
-        """ target: calculate target Q value"""
-        pass
 
     @tf.function(input_signature=(  # input_signature is specified to avoid frequent retracing
             tf.TensorSpec(shape=[None, None, OBSERVATION_SIZE], dtype=tf.float64),
@@ -124,6 +120,15 @@ class Network(tf.keras.Model):
         return loss
 
     def copy(self):
-        return type(self)(self.learning_rate, self.discount_factor, self.tau, self.temperature, self.alpha, self.hidden_units, self.activation)
+        return type(self)(self.learning_rate, self.discount_factor, self.tau, self.temperature, self.alpha,
+                          self.hidden_units, self.activation)
 
+    @abstractmethod
+    def target(self, observations, actions, rewards, next_observations, done):
+        """ target: calculate target Q value """
+        pass
 
+    @abstractmethod
+    def selection(self, Q, eps):
+        """ selection: selection policy """
+        pass
